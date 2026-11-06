@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.0 (build 5) - 2026-11-05
+
+- Built-in snapshot: The Refinery's Aug 17 entries moved to Aug 15 to match the fix in the sheet (7 PAX that day).
+
 ## v1.1.0 (build 4) - 2026-11-05
 
 - Mobile layout: AO and event names wrap onto multiple lines so the counts sit closer to them, and all week columns are the same width.
