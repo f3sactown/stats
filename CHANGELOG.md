@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.1 (build 3) - 2026-11-05
+
+- Heatmap shading changed from green to blue, with neutrals tinted to match.
+
 ## v1.0.0 (build 2) - 2026-11-05
 
 - Repo renamed from `heat` to `stats`; site now served at `stats.f3sactown.com` (CNAME added).
