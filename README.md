@@ -53,4 +53,5 @@ The script updates `VERSION`, `BUILD`, the version shown on the page, and adds a
 | `VERSION`, `BUILD` | Current version and build number |
 | `CHANGELOG.md` | What changed in each build |
 | `scripts/bump.sh` | Bumps the version and build number |
+| `favicon.ico`, `icons/` | Site icon (F3 SacTown logo) for browser tabs and phone home screens |
 | `CNAME` | Custom domain for GitHub Pages (`stats.f3sactown.com`) |

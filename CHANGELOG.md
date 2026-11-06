@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.0 (build 6) - 2026-11-05
+
+- Added the F3 SacTown logo as the site icon: browser tab favicon and phone home-screen icon.
+
 ## v1.1.0 (build 5) - 2026-11-05
 
 - Built-in snapshot: The Refinery's Aug 17 entries moved to Aug 15 to match the fix in the sheet (7 PAX that day).
