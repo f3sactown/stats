@@ -2,7 +2,7 @@
 
 A one-page site that shows every F3 SacTown workout for a chosen month as a heatmap: one row per AO, one column per week, each cell shaded by how many PAX posted. **5–8 PAX is the ideal range** and is ringed in gold; fewer PAX is lighter, more PAX is darker.
 
-**Live site:** https://f3sactown.github.io/heat/
+**Live site:** https://stats.f3sactown.com/
 
 Current version: see [`VERSION`](VERSION) and [`BUILD`](BUILD), or the footer of the page.
 
@@ -10,7 +10,7 @@ Current version: see [`VERSION`](VERSION) and [`BUILD`](BUILD), or the footer of
 
 - Pick a month from the dropdown or step through with the arrows.
 - Tap any cell to see the Q and who posted.
-- Link straight to a month by adding `#mYYYYMM` to the address, e.g. `https://f3sactown.github.io/heat/#m202610` for October 2026.
+- Link straight to a month by adding `#mYYYYMM` to the address, e.g. `https://stats.f3sactown.com/#m202610` for October 2026.
 - The line beside the month picker says whether you're seeing live sheet data or the built-in snapshot.
 
 ## Where the data comes from
@@ -30,7 +30,7 @@ If the page stops loading live data, publish the tab as CSV (**File → Share �
 
 ## Hosting
 
-GitHub Pages serves `index.html` from the `main` branch root. To turn it on: **Settings → Pages → Deploy from a branch → `main` / `(root)` → Save**.
+GitHub Pages serves `index.html` from the `main` branch root of `f3sactown/stats`, at the custom domain in [`CNAME`](CNAME) (`stats.f3sactown.com`). Pages settings: **Settings → Pages → Deploy from a branch → `main` / `(root)`**, custom domain `stats.f3sactown.com`.
 
 ## Versioning
 
@@ -53,3 +53,4 @@ The script updates `VERSION`, `BUILD`, the version shown on the page, and adds a
 | `VERSION`, `BUILD` | Current version and build number |
 | `CHANGELOG.md` | What changed in each build |
 | `scripts/bump.sh` | Bumps the version and build number |
+| `CNAME` | Custom domain for GitHub Pages (`stats.f3sactown.com`) |

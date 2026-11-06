@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.0 (build 2) - 2026-11-05
+
+- Repo renamed from `heat` to `stats`; site now served at `stats.f3sactown.com` (CNAME added).
+- README links updated to the new address.
+
 ## v1.0.0 (build 1) - 2026-11-05
 
 - First release: monthly attendance heatmap for F3 SacTown, one row per AO grouped by workout day, one column per Mon–Sun week.
