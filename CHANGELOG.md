@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.1.0 (build 4) - 2026-11-05
+
+- Mobile layout: AO and event names wrap onto multiple lines so the counts sit closer to them, and all week columns are the same width.
+- Name column stays frozen on the left when the grid scrolls sideways on small screens.
+- Day of week is now a heading row above each group (Monday, Tuesday, …, Events) instead of its own column.
+- Week headers stack the month over the date range to save width.
+
 ## v1.0.1 (build 3) - 2026-11-05
 
 - Heatmap shading changed from green to blue, with neutrals tinted to match.

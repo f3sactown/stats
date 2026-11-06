@@ -41,13 +41,17 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(30px,5vw,44px);lin
 .ramp .band{position:absolute;top:0;height:14px;border:2px solid var(--ideal);border-bottom:0;border-radius:3px 3px 0 0;font-family:var(--mono);font-size:10px;color:#8a5f0b;text-align:center;line-height:10px;letter-spacing:.06em}
 .legend small{color:var(--muted);max-width:34ch}
 .grid-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px}
-table{border-collapse:separate;border-spacing:4px;width:100%;min-width:680px;font-variant-numeric:tabular-nums}
+table{border-collapse:separate;border-spacing:4px;width:100%;table-layout:fixed;font-variant-numeric:tabular-nums}
+col.c-ao{width:170px}
+col.c-avg{width:52px}
 th{font-weight:600;font-size:12px;color:var(--muted);text-align:left;padding:6px 4px;white-space:nowrap}
-thead th{font-family:var(--mono);font-weight:500;letter-spacing:.04em;text-align:center}
-td.ao{font-weight:600;white-space:nowrap;padding:0 8px 0 4px;font-size:14px}
-td.day{font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;padding-right:6px}
-tr.sep td{padding:0;height:6px}
-tr.sep td.rule{border-top:1px solid var(--line)}
+thead th{font-family:var(--mono);font-weight:500;letter-spacing:.04em;text-align:center;line-height:1.2;vertical-align:bottom}
+thead th span{display:block}
+td.ao,thead th:first-child{position:sticky;left:0;z-index:1;background:var(--surface);box-shadow:4px 0 0 var(--surface)}
+td.ao{font-weight:600;padding:0 8px 0 4px;font-size:14px;line-height:1.2;overflow-wrap:break-word;hyphens:auto}
+tr.grp th{font-family:var(--mono);font-weight:500;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:10px 4px 2px;border-top:1px solid var(--line)}
+tbody tr.grp:first-child th{border-top:0;padding-top:4px}
+tr.grp th span{position:sticky;left:4px}
 td.c{padding:0;vertical-align:top}
 td.c .stack{display:grid;gap:3px}
 td.c button{all:unset;cursor:pointer;display:grid;place-items:center;width:100%;height:46px;border-radius:5px;box-sizing:border-box;text-align:center}
@@ -57,6 +61,20 @@ td.c .n{font-family:var(--display);font-size:22px;font-weight:700;line-height:1}
 td.c .d{font-family:var(--mono);font-size:10px;opacity:.75;line-height:1}
 td.c.none{height:46px;border-radius:5px;background:repeating-linear-gradient(45deg,transparent 0 5px,var(--line) 5px 6px);opacity:.6}
 td.avg{font-family:var(--mono);font-size:13px;text-align:right;padding-left:10px;white-space:nowrap}
+@media (max-width:600px){
+  .grid-wrap{border-radius:6px}
+  table{border-spacing:3px}
+  th{font-size:10px;padding:4px 2px}
+  thead th{letter-spacing:0}
+  col.c-ao{width:92px}
+  col.c-avg{width:30px}
+  table{min-width:340px}
+  td.ao{font-size:12.5px;padding:0 2px}
+  td.c button,td.c.none{height:40px}
+  td.c .n{font-size:18px}
+  td.c .d{font-size:9px;letter-spacing:-.02em}
+  td.avg{font-size:11px;padding-left:2px}
+}
 .empty{padding:28px;text-align:center;color:var(--muted)}
 .detail{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:grid;gap:6px;min-height:64px}
 .detail h2{font-family:var(--display);font-size:22px;margin:0;font-weight:600}
@@ -100,8 +118,8 @@ td.avg{font-family:var(--mono);font-size:13px;text-align:right;padding-left:10px
 
 <script>
 // ---- Settings ----------------------------------------------------------
-const APP_VERSION = "1.0.1";
-const APP_BUILD = 3;
+const APP_VERSION = "1.1.0";
+const APP_BUILD = 4;
 // The page reads the Master Data tab live. If this ever stops loading, use
 // File > Share > Publish to web > Master Data > CSV in Google Sheets and
 // paste that link here instead.
@@ -201,13 +219,14 @@ function render(){
     if(!groups.has(g))groups.set(g,[]);groups.get(g).push(ao);
   }
   const order=DAYORDER.concat("Event").filter(g=>groups.has(g));
-  const cols=WEEKS.length+3;
+  const cols=WEEKS.length+2;
 
   const g=document.getElementById("grid");
   if(!ws.length){g.innerHTML=`<tbody><tr><td class="empty">No workouts logged this month.</td></tr></tbody>`;return}
-  let h=`<thead><tr><th></th><th></th>${WEEKS.map(([a,b])=>`<th>${MON[m-1].slice(0,3)} ${a}${a===b?"":"–"+b}</th>`).join("")}<th style="text-align:right">Avg</th></tr></thead><tbody>`;
+  let h=`<colgroup><col class="c-ao">${WEEKS.map(()=>"<col>").join("")}<col class="c-avg"></colgroup><thead><tr><th></th>${WEEKS.map(([a,b])=>`<th><span>${MON[m-1].slice(0,3)}</span><span>${a}${a===b?"":"–"+b}</span></th>`).join("")}<th style="text-align:right">Avg</th></tr></thead><tbody>`;
+  const DAYNAME={Mon:"Monday",Tue:"Tuesday",Wed:"Wednesday",Thu:"Thursday",Fri:"Friday",Sat:"Saturday",Sun:"Sunday",Event:"Events"};
   order.forEach((day,gi)=>{
-    if(gi)h+=`<tr class="sep"><td colspan="${cols}" class="rule"></td></tr>`;
+    h+=`<tr class="grp"><th colspan="${cols}" scope="rowgroup"><span>${DAYNAME[day]}</span></th></tr>`;
     groups.get(day).sort().forEach((ao,ai)=>{
       const rows=byAo.get(ao).sort((a,b)=>a.d-b.d);
       const cells=WEEKS.map((_,w)=>{
@@ -217,7 +236,7 @@ function render(){
           return `<button data-i="${i}" class="${ideal(r.n)?"ideal":""}" style="background:var(${b.c});color:${b.t}" aria-label="${ao}, ${DOW[dowOf(r)]} ${MON[m-1]} ${r.d}: ${r.n} PAX"><span><div class="n">${r.n}</div><div class="d">${DOW[dowOf(r)].slice(0,2)} ${r.d}</div></span></button>`}).join("")}</div></td>`;
       }).join("");
       const avg=(rows.reduce((s,r)=>s+r.n,0)/rows.length).toFixed(1);
-      h+=`<tr><td class="day">${ai===0?day:""}</td><td class="ao">${ao}</td>${cells}<td class="avg">${avg}</td></tr>`;
+      h+=`<tr><td class="ao">${ao}</td>${cells}<td class="avg">${avg}</td></tr>`;
     });
   });
   g.innerHTML=h+"</tbody>";
