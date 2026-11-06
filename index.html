@@ -25,7 +25,12 @@
 }
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
 .wrap{max-width:1080px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:22px}
-header{display:grid;gap:6px}
+header{display:grid;grid-template-columns:auto 1fr;column-gap:16px;row-gap:6px;align-items:center}
+.brand{grid-row:1 / span 2;display:block;line-height:0;border-radius:50%}
+.brand img{width:76px;height:76px;display:block}
+.brand:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+header .lede{grid-column:1 / -1}
+@media (max-width:600px){.brand img{width:56px;height:56px}header{column-gap:12px}}
 .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 h1{font-family:var(--display);font-weight:700;font-size:clamp(30px,5vw,44px);line-height:1;margin:0;text-wrap:balance;letter-spacing:.01em}
 .lede{margin:0;color:var(--muted);max-width:62ch}
@@ -93,6 +98,7 @@ td.avg{font-family:var(--mono);font-size:13px;text-align:right;padding-left:10px
 
 <div class="wrap">
   <header>
+    <a class="brand" href="https://f3sactown.com/" aria-label="F3 SacTown home"><img src="icons/icon-192.png" alt="F3 SacTown logo" width="76" height="76"></a>
     <div class="eyebrow">F3 SacTown · Master Data</div>
     <h1 id="title">Workout Attendance</h1>
     <p class="lede">Every workout in the month by AO and week. The number is PAX posted; the gold ring marks the 5–8 sweet spot. Tap a cell for the Q and the full PAX list.</p>
@@ -123,7 +129,7 @@ td.avg{font-family:var(--mono);font-size:13px;text-align:right;padding-left:10px
 <script>
 // ---- Settings ----------------------------------------------------------
 const APP_VERSION = "1.2.0";
-const APP_BUILD = 6;
+const APP_BUILD = 7;
 // The page reads the Master Data tab live. If this ever stops loading, use
 // File > Share > Publish to web > Master Data > CSV in Google Sheets and
 // paste that link here instead.

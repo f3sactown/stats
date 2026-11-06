@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.0 (build 7) - 2026-11-05
+
+- F3 SacTown logo added beside the page title, linking to f3sactown.com.
+
 ## v1.2.0 (build 6) - 2026-11-05
 
 - Added the F3 SacTown logo as the site icon: browser tab favicon and phone home-screen icon.
