@@ -123,13 +123,14 @@ td.avg{font-family:var(--mono);font-size:13px;text-align:right;padding-left:10px
   <div class="detail" id="detail" aria-live="polite"><h2>Pick a workout</h2><p>Select any cell to see who posted.</p></div>
 
   <p class="notes">Counts use the Post column only, so Q-Source rows are left out, and a PAX listed twice at the same workout counts once. "Site Closed" placeholder rows are excluded. AOs whose name starts with a year (2026 QvQ, half marathon) are grouped as events.</p>
+  <p class="notes">Max of 18: past 18 PAX at a workout, DRTF (diminishing returns to fellowship) sets in. <cite>Freed to Lead</cite>, Chapter 4.</p>
   <p class="notes version" id="version"></p>
 </div>
 
 <script>
 // ---- Settings ----------------------------------------------------------
-const APP_VERSION = "1.3.0";
-const APP_BUILD = 8;
+const APP_VERSION = "1.3.1";
+const APP_BUILD = 9;
 // The page reads the Master Data tab live. If this ever stops loading, use
 // File > Share > Publish to web > Master Data > CSV in Google Sheets and
 // paste that link here instead.
