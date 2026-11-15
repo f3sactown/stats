@@ -101,7 +101,7 @@ td.avg{font-family:var(--mono);font-size:13px;text-align:right;padding-left:10px
     <a class="brand" href="https://f3sactown.com/" aria-label="F3 SacTown home"><img src="icons/icon-192.png" alt="F3 SacTown logo" width="76" height="76"></a>
     <div class="eyebrow">F3 SacTown · Master Data</div>
     <h1 id="title">Workout Attendance</h1>
-    <p class="lede">Every workout in the month by AO and week. The number is PAX posted; the gold ring marks the 5–8 sweet spot. Tap a cell for the Q and the full PAX list.</p>
+    <p class="lede">Every workout in the month by AO and week. The number is PAX posted; the gold ring marks the 8–15 sweet spot. Tap a cell for the Q and the full PAX list.</p>
   </header>
 
   <div class="controls">
@@ -115,7 +115,7 @@ td.avg{font-family:var(--mono);font-size:13px;text-align:right;padding-left:10px
 
   <div class="legend">
     <div class="ramp" id="ramp"></div>
-    <small>Lighter means fewer PAX, darker means more. Gold-ringed cells are in the 5–8 ideal range. Hatched cells are weeks with no workout logged.</small>
+    <small>Lighter means fewer PAX, darker means more. Gold-ringed cells are in the 8–15 ideal range. Hatched cells are weeks with no workout logged.</small>
   </div>
 
   <div class="grid-wrap" id="gridwrap"><table id="grid"></table></div>
@@ -123,13 +123,14 @@ td.avg{font-family:var(--mono);font-size:13px;text-align:right;padding-left:10px
   <div class="detail" id="detail" aria-live="polite"><h2>Pick a workout</h2><p>Select any cell to see who posted.</p></div>
 
   <p class="notes">Counts use the Post column only, so Q-Source rows are left out, and a PAX listed twice at the same workout counts once. "Site Closed" placeholder rows are excluded. AOs whose name starts with a year (2026 QvQ, half marathon) are grouped as events.</p>
+  <p class="notes">Max of 18: past 18 PAX at a workout, DRTF (diminishing returns to fellowship) sets in. <cite>Freed to Lead</cite>, Chapter 4.</p>
   <p class="notes version" id="version"></p>
 </div>
 
 <script>
 // ---- Settings ----------------------------------------------------------
-const APP_VERSION = "1.3.0";
-const APP_BUILD = 8;
+const APP_VERSION = "1.4.0";
+const APP_BUILD = 10;
 // The page reads the Master Data tab live. If this ever stops loading, use
 // File > Share > Publish to web > Master Data > CSV in Google Sheets and
 // paste that link here instead.
@@ -141,7 +142,8 @@ const SNAPSHOT = [["2025-01-01","The American","Scooper",["4X4","Body Shots","Mi
 
 const BINS=[{lo:1,hi:3,c:"--h1",t:"#172233"},{lo:4,hi:7,c:"--h2",t:"#172233"},{lo:8,hi:11,c:"--h3",t:"#172233"},{lo:12,hi:15,c:"--h4",t:"#ffffff"},{lo:16,hi:18,c:"--h5",t:"#ffffff"},{lo:19,hi:1e9,c:"--h6",t:"#ffffff"}];
 const bin=n=>BINS.find(b=>n>=b.lo&&n<=b.hi);
-const ideal=n=>n>=5&&n<=8;
+const IDEAL_LO=8,IDEAL_HI=15;
+const ideal=n=>n>=IDEAL_LO&&n<=IDEAL_HI;
 const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MON=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAYORDER=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
@@ -217,7 +219,7 @@ function render(){
 
   // stats
   const tot=ws.reduce((s,r)=>s+r.n,0);
-  document.getElementById("stats").innerHTML=[[ws.length,"workouts"],[tot,"total posts"],[ws.filter(r=>ideal(r.n)).length,"in the 5–8 range"],[ws.filter(r=>r.n<5).length,"under 5"],[ws.filter(r=>r.n>8).length,"over 8"]].map(([v,l])=>`<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("");
+  document.getElementById("stats").innerHTML=[[ws.length,"workouts"],[tot,"total posts"],[ws.filter(r=>ideal(r.n)).length,`in the ${IDEAL_LO}–${IDEAL_HI} range`],[ws.filter(r=>r.n<IDEAL_LO).length,`under ${IDEAL_LO}`],[ws.filter(r=>r.n>IDEAL_HI).length,`over ${IDEAL_HI}`]].map(([v,l])=>`<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("");
 
   // group AOs by their usual weekday; year-prefixed names are events
   const byAo=new Map();ws.forEach(w=>{if(!byAo.has(w.ao))byAo.set(w.ao,[]);byAo.get(w.ao).push(w)});
@@ -255,7 +257,7 @@ function render(){
 
 document.getElementById("grid").addEventListener("click",e=>{
   const b=e.target.closest("button[data-i]");if(!b)return;const r=WORKOUTS[+b.dataset.i];
-  const verdict=ideal(r.n)?"In the ideal range":r.n<5?`${5-r.n} short of the ideal range`:`${r.n-8} over the ideal range`;
+  const verdict=ideal(r.n)?"In the ideal range":r.n<IDEAL_LO?`${IDEAL_LO-r.n} short of the ideal range`:`${r.n-IDEAL_HI} over the ideal range`;
   document.getElementById("detail").innerHTML=`<h2>${r.ao} · ${DOW[new Date(r.y,r.m-1,r.d).getDay()]} ${MON[r.m-1]} ${r.d} · ${r.n} PAX</h2><p><strong>Q:</strong> ${r.q||"not recorded"} · ${verdict}</p><p>${r.pax.join(", ")}</p>`;
 });
 sel.addEventListener("change",render);
@@ -269,7 +271,7 @@ document.getElementById("version").textContent=`v${APP_VERSION} · build ${APP_B
 // legend
 const ramp=document.getElementById("ramp");
 BINS.forEach(b=>{const el=document.createElement("div");el.style.background=`var(${b.c})`;el.style.color=b.t;el.textContent=b.hi>99?`${b.lo}+`:`${b.lo}–${b.hi}`;ramp.appendChild(el)});
-const band=document.createElement("div");band.className="band";band.textContent="IDEAL";band.style.left="calc((100% - 15px)/6*1.25 + 3px)";band.style.width="calc((100% - 15px)/6 + 3px)";ramp.appendChild(band);
+const band=document.createElement("div");band.className="band";band.textContent="IDEAL";band.style.left="calc((100% - 15px)/6*2 + 6px)";band.style.width="calc((100% - 15px)/6*2 + 3px)";ramp.appendChild(band);
 
 // ---- Start: show the snapshot right away, then swap in live data -----------
 function initialMonth(){
