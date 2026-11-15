@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.0 (build 8) - 2026-11-15
+
+- Heatmap shade ranges changed to 1–3, 4–7, 8–11, 12–15, 16–18 and 19+. The IDEAL marker on the legend now sits over 5–8 across the second and third swatches, and the legend note mentions the gold ring.
+
 ## v1.2.0 (build 7) - 2026-11-05
 
 - F3 SacTown logo added beside the page title, linking to f3sactown.com.
