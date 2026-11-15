@@ -1,6 +1,6 @@
 # F3 SacTown Attendance Heatmap
 
-A one-page site that shows every F3 SacTown workout for a chosen month as a heatmap: one row per AO, one column per week, each cell shaded by how many PAX posted. **5–8 PAX is the ideal range** and is ringed in gold; fewer PAX is lighter, more PAX is darker.
+A one-page site that shows every F3 SacTown workout for a chosen month as a heatmap: one row per AO, one column per week, each cell shaded by how many PAX posted. **8–15 PAX is the ideal range** and is ringed in gold; fewer PAX is lighter, more PAX is darker.
 
 **Live site:** https://stats.f3sactown.com/
 

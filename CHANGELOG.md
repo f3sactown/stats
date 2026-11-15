@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.0 (build 10) - 2026-11-15
+
+- Ideal range changed from 5–8 to 8–15 PAX: gold rings, stat counts (in range, under 8, over 15), the cell detail verdict, the legend IDEAL marker (now over the 8–11 and 12–15 swatches) and the page text all follow it.
+
 ## v1.3.1 (build 9) - 2026-11-15
 
 - Added a footnote: past 18 PAX at a workout, DRTF (diminishing returns to fellowship) sets in (Freed to Lead, Chapter 4).
