@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.0 (build 11) - 2026-11-16
+
+- Light and dark mode, chosen with a Light / Dark / System switch at the bottom of the page. System follows the device setting, and the choice is remembered. In dark mode the heat ramp runs dim to bright so busy workouts still stand out; the legend note now reads "The stronger the blue, the more PAX."
+
 ## v1.4.0 (build 10) - 2026-11-15
 
 - Ideal range changed from 5–8 to 8–15 PAX: gold rings, stat counts (in range, under 8, over 15), the cell detail verdict, the legend IDEAL marker (now over the 8–11 and 12–15 swatches) and the page text all follow it.
