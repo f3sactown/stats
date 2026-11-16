@@ -10,6 +10,7 @@ Current version: see [`VERSION`](VERSION) and [`BUILD`](BUILD), or the footer of
 
 - Pick a month from the dropdown or step through with the arrows.
 - Tap any cell to see the Q and who posted.
+- Switch between Light, Dark and System (follows your device) at the bottom of the page. Your choice is remembered on that device.
 - Link straight to a month by adding `#mYYYYMM` to the address, e.g. `https://stats.f3sactown.com/#m202610` for October 2026.
 - The line beside the month picker says whether you're seeing live sheet data or the built-in snapshot.
 
