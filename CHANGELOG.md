@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.6.0 (build 12) - 2026-11-22
+
+- New **Insights** page, linked from Heatmap / Insights tabs at the top of both pages. Pick a period (last 4 or 13 weeks, a year, or all time) to see totals with change vs the prior period, posts per week or month, a workout-size histogram with the 8–15 ideal and the 18 DRTF line, average PAX by day and posts by style, sortable AO and PAX tables, new PAX, and regulars who have gone quiet. Day and style come from the Sites tab.
+- Shared code split out of `index.html`: `data.js` (snapshot, sheet links, counting rules) and `site.css` / `site.js` (colours, theme switch, footer, version). `scripts/bump.sh` now updates `site.js`.
+
 ## v1.5.0 (build 11) - 2026-11-16
 
 - Light and dark mode, chosen with a Light / Dark / System switch at the bottom of the page. System follows the device setting, and the choice is remembered. In dark mode the heat ramp runs dim to bright so busy workouts still stand out; the legend note now reads "The stronger the blue, the more PAX."

@@ -2,7 +2,7 @@
 # Bump the build number (always) and optionally the version.
 #   scripts/bump.sh               -> build +1, version unchanged
 #   scripts/bump.sh patch|minor|major -> build +1 and version bumped
-# Updates VERSION, BUILD and the constants in index.html, and adds a
+# Updates VERSION, BUILD and the constants in site.js, and adds a
 # CHANGELOG heading for the new build that you fill in.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -21,8 +21,8 @@ ver="$major.$minor.$patch"
 
 echo "$ver" > VERSION
 echo "$build" > BUILD
-sed -i.bak -E "s/^const APP_VERSION = \"[^\"]*\";/const APP_VERSION = \"$ver\";/; s/^const APP_BUILD = [0-9]+;/const APP_BUILD = $build;/" index.html
-rm -f index.html.bak
+sed -i.bak -E "s/^const APP_VERSION = \"[^\"]*\";/const APP_VERSION = \"$ver\";/; s/^const APP_BUILD = [0-9]+;/const APP_BUILD = $build;/" site.js
+rm -f site.js.bak
 
 today=$(date +%Y-%m-%d)
 tmp=$(mktemp)

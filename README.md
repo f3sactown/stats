@@ -14,6 +14,18 @@ Current version: see [`VERSION`](VERSION) and [`BUILD`](BUILD), or the footer of
 - Link straight to a month by adding `#mYYYYMM` to the address, e.g. `https://stats.f3sactown.com/#m202610` for October 2026.
 - The line beside the month picker says whether you're seeing live sheet data or the built-in snapshot.
 
+## Insights page
+
+`insights.html` (the **Insights** tab) summarises a chosen period: last 4 weeks, last 13 weeks, each year, or all time. It shows:
+
+- Totals with change against the previous period: workouts, posts, unique PAX, average PAX per workout, share of workouts in the 8–15 range, new PAX.
+- Posts per week (per month for all time), and a histogram of workout sizes with the 8–15 ideal and the 18 DRTF line marked.
+- Average PAX by day of week, and posts by workout style (from the Sites tab).
+- Sortable AO and PAX tables, the PAX table with search.
+- New PAX (first post on record) and "Missing in action": regulars with 10+ posts whose last post was 3–26 weeks ago.
+
+Link straight to a period with `#p4w`, `#p13w`, `#p2026` or `#pall`.
+
 ## Where the data comes from
 
 The page reads the **Master Data** tab of the F3 SacTown Data Google Sheet every time it loads, so new workouts appear on their own. The sheet must stay shared as "Anyone with the link can view."
@@ -25,9 +37,9 @@ Counting rules:
 - "Site Closed (Archived)" placeholder rows are ignored.
 - AOs whose name starts with a year (e.g. `2026 QvQ Inter-Regional Championship`) are grouped as events.
 
-If the sheet can't be reached, the page falls back to a snapshot of the data built into `index.html` (currently through Nov 5, 2026).
+If the sheet can't be reached, the page falls back to a snapshot of the data built into `data.js` (currently through Nov 5, 2026).
 
-If the page stops loading live data, publish the tab as CSV (**File → Share → Publish to web → Master Data → CSV**) and paste that link into `SHEET_CSV_URL` near the top of the script in `index.html`.
+If the page stops loading live data, publish the tab as CSV (**File → Share → Publish to web → Master Data → CSV**) and paste that link into `SHEET_CSV_URL` at the top of `data.js`. The Insights page also reads the **Sites** tab for each AO's day and style, falling back to a copy in `data.js`.
 
 ## Hosting
 
@@ -50,7 +62,10 @@ The script updates `VERSION`, `BUILD`, the version shown on the page, and adds a
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | The whole site: page, heatmap code, and data snapshot |
+| `index.html` | Heatmap page |
+| `insights.html`, `insights.js` | Insights page: KPIs, trends, workout-size histogram, AO and PAX leaderboards, new PAX, regulars gone quiet |
+| `data.js` | Shared data layer: sheet links, built-in snapshots (Master Data and Sites), parsing and counting rules |
+| `site.css`, `site.js` | Shared colours (light and dark), layout, page tabs, footer, theme switch and version number |
 | `VERSION`, `BUILD` | Current version and build number |
 | `CHANGELOG.md` | What changed in each build |
 | `scripts/bump.sh` | Bumps the version and build number |
