@@ -1,0 +1,71 @@
+/* Shared by every page: colour tokens (light + dark), type, header, stats, notes, tabs and footer */
+*{box-sizing:border-box}body{margin:0}
+:root{
+  --bg:#f5f7fa; --surface:#ffffff; --ink:#172233; --muted:#5d6a7d; --line:#d6dde8;
+  --h1:#eef3fa; --h2:#c6d8ef; --h3:#86aee0; --h4:#4a7fc4; --h5:#22549a; --h6:#0e2f63;
+  --t1:#172233; --t2:#172233; --t3:#172233; --t4:#ffffff; --t5:#ffffff; --t6:#ffffff;
+  --ideal:#e0a227; --ideal-ink:#8a5f0b;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+/* Dark theme: the heat ramp runs dim to bright so busy workouts still stand out */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1520; --surface:#171f2d; --ink:#e6ecf5; --muted:#93a1b5; --line:#2b3649;
+  --h1:#1f2b3f; --h2:#27416b; --h3:#2f5f9f; --h4:#4a86d2; --h5:#8ab5ec; --h6:#d2e3f9;
+  --t1:#e6ecf5; --t2:#e6ecf5; --t3:#ffffff; --t4:#ffffff; --t5:#0e1a2e; --t6:#0e1a2e;
+  --ideal:#e8b03a; --ideal-ink:#e8b84a;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1520; --surface:#171f2d; --ink:#e6ecf5; --muted:#93a1b5; --line:#2b3649;
+  --h1:#1f2b3f; --h2:#27416b; --h3:#2f5f9f; --h4:#4a86d2; --h5:#8ab5ec; --h6:#d2e3f9;
+  --t1:#e6ecf5; --t2:#e6ecf5; --t3:#ffffff; --t4:#ffffff; --t5:#0e1a2e; --t6:#0e1a2e;
+  --ideal:#e8b03a; --ideal-ink:#e8b84a;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:1080px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:22px}
+header{display:grid;grid-template-columns:auto 1fr;column-gap:16px;row-gap:6px;align-items:center}
+.brand{grid-row:1 / span 2;display:block;line-height:0;border-radius:50%}
+.brand img{width:76px;height:76px;display:block}
+.brand:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+header .lede{grid-column:1 / -1}
+@media (max-width:600px){.brand img{width:56px;height:56px}header{column-gap:12px}}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(30px,5vw,44px);line-height:1;margin:0;text-wrap:balance;letter-spacing:.01em}
+.lede{margin:0;color:var(--muted);max-width:62ch}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.controls button,.controls select{font:600 15px var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 12px;cursor:pointer}
+.controls select{min-width:180px}
+.controls button:focus-visible,.controls select:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.controls button:disabled{opacity:.4;cursor:default}
+.source{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.stats{display:flex;flex-wrap:wrap;gap:10px 28px}
+.stat{display:grid}
+.stat b{font-family:var(--display);font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.detail{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:grid;gap:6px;min-height:64px}
+.detail h2{font-family:var(--display);font-size:22px;margin:0;font-weight:600}
+.detail p{margin:0;color:var(--muted)}
+.notes.version{font-family:var(--mono);font-size:11px}
+footer.foot{display:grid;justify-items:center;gap:10px;padding-top:8px}
+footer.foot .notes.version{text-align:center}
+.theme{display:inline-flex;gap:2px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+.theme button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:999px;font:600 14px var(--body);color:var(--muted)}
+.theme button svg{width:16px;height:16px;flex:none}
+.theme button:hover{color:var(--ink)}
+.theme button[aria-checked="true"]{background:var(--bg);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.theme button[aria-checked="true"] svg{color:var(--ideal)}
+.theme button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.notes{font-size:13px;color:var(--muted);margin:0;max-width:75ch}
+/* Page tabs: same pill shape as the theme switch */
+.tabs{display:inline-flex;gap:2px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--surface);justify-self:start}
+.tabs a{display:inline-flex;align-items:center;gap:7px;padding:6px 16px;border-radius:999px;font:600 14px var(--body);color:var(--muted);text-decoration:none}
+.tabs a svg{width:16px;height:16px;flex:none}
+.tabs a:hover{color:var(--ink)}
+.tabs a[aria-current="page"]{background:var(--bg);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.tabs a[aria-current="page"] svg{color:var(--ideal)}
+.tabs a:focus-visible{outline:2px solid var(--ink);outline-offset:2px}

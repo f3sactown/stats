@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>SacTown Insights</title>
+<meta name="color-scheme" content="light dark">
+<script>try{const t=localStorage.getItem("hm-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="site.css">
+<style>
+/* Insights: KPI tiles, charts and leaderboards for a chosen period */
+.period{display:inline-flex;flex-wrap:wrap;gap:2px;padding:4px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.period button{all:unset;cursor:pointer;padding:6px 12px;border-radius:7px;font:600 14px var(--body);color:var(--muted);white-space:nowrap}
+.period button:hover{color:var(--ink)}
+.period button[aria-pressed="true"]{background:var(--h4);color:var(--t4)}
+.period button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.range{font-size:13px;color:var(--muted)}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:4px;align-content:start}
+.kpi span{font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.kpi b{font-family:var(--display);font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.kpi small{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.kpi small .up::before{content:"▲ "}.kpi small .down::before{content:"▼ "}
+.kpi small .up,.kpi small .down{color:var(--ink)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:grid;gap:12px;min-width:0}
+.panel h2{font-family:var(--display);font-size:24px;font-weight:700;margin:0;line-height:1.05;letter-spacing:.01em}
+.panel .sub{margin:-6px 0 0;font-size:13px;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+
+/* column charts */
+.cols{position:relative;height:200px;display:flex;align-items:flex-end;gap:2px;padding-left:34px;border-bottom:1px solid var(--line)}
+.cols .gl{position:absolute;left:34px;right:0;border-top:1px dashed var(--line);pointer-events:none}
+.cols .gl span{position:absolute;right:calc(100% + 6px);top:-8px;font:500 10px var(--mono);color:var(--muted)}
+.cols .bar{flex:1;min-width:2px;height:100%;display:flex;align-items:flex-end;cursor:default;position:relative;z-index:1}
+.cols .bar i{display:block;width:100%;background:var(--h4);border-radius:4px 4px 0 0;min-height:1px}
+.cols .bar:hover i,.cols .bar.on i{filter:brightness(1.18)}
+.xlab{display:flex;gap:2px;padding-left:34px;font:500 10px var(--mono);color:var(--muted);height:14px;margin-top:5px}
+.xlab span{flex:1;min-width:2px;text-align:center;white-space:nowrap;overflow:visible}
+.cols .band{position:absolute;bottom:0;top:0;background:color-mix(in srgb,var(--ideal) var(--band-mix,14%),transparent);border-top:2px solid var(--ideal);pointer-events:none;z-index:0}
+.cols .band span,.cols .cap span{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font:500 10px var(--mono);letter-spacing:.06em;color:var(--ideal-ink);white-space:nowrap}
+.cols .cap{position:absolute;bottom:0;top:0;border-left:2px dashed var(--muted);pointer-events:none;z-index:2}
+.cols .cap span{color:var(--muted);left:4px;transform:none}
+.hist{margin-top:18px}
+
+/* horizontal bars */
+.hbars{display:grid;gap:6px}
+.hb{display:grid;grid-template-columns:86px 1fr auto;align-items:center;gap:10px;font-size:14px}
+.hb .lab{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb .track{height:18px;position:relative}
+.hb .track i{position:absolute;inset:0 auto 0 0;background:var(--h4);border-radius:0 4px 4px 0}
+.hb .val{font:500 12px var(--mono);color:var(--muted);text-align:right;white-space:nowrap}
+.hb .val b{color:var(--ink);font-weight:500}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;margin:0 -4px}
+table.t{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+table.t th{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.t th:first-child,table.t td:first-child,table.t th.l{text-align:left}
+table.t th button{all:unset;cursor:pointer}
+table.t th button:hover{color:var(--ink)}
+table.t th button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+table.t th[aria-sort] button::after{content:" ▼";font-size:9px}
+table.t th[aria-sort="ascending"] button::after{content:" ▲"}
+table.t td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.t td.name{font-weight:600;white-space:normal;min-width:120px}
+table.t td.name small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+table.t td.l{text-align:left;color:var(--muted)}
+table.t tr:last-child td{border-bottom:0}
+.avgcell{display:inline-flex;align-items:center;gap:8px;justify-content:flex-end}
+.chip{display:inline-block;min-width:38px;padding:2px 6px;border-radius:4px;font:500 12px var(--mono);text-align:center}
+.chip.ideal{box-shadow:inset 0 0 0 2px var(--ideal)}
+.delta{font:500 12px var(--mono);color:var(--muted)}
+.tag{font:500 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 4px;margin-left:6px;vertical-align:1px}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.tools input{font:15px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;min-width:0;flex:1;max-width:280px}
+.tools input:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.more{font:600 14px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer;justify-self:start}
+.more:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.list{display:grid;gap:0;margin:0;padding:0;list-style:none;font-size:14px}
+.list li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)}
+.list li:last-child{border-bottom:0}
+.list li span:last-child{color:var(--muted);font:500 12px var(--mono);text-align:right;white-space:nowrap}
+.empty{color:var(--muted);font-size:14px;margin:0}
+
+[data-theme="dark"] .cols .band{--band-mix:9%}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cols .band{--band-mix:9%}}
+#tip{position:fixed;z-index:10;pointer-events:none;background:var(--ink);color:var(--bg);font:500 12px var(--mono);padding:6px 8px;border-radius:5px;white-space:pre;line-height:1.5;opacity:0;transition:opacity .08s}
+#tip.on{opacity:1}
+@media (max-width:600px){.cols{height:160px;padding-left:28px}.cols .gl{left:28px}.xlab{padding-left:28px}.hb{grid-template-columns:72px 1fr auto;font-size:13px}.kpi b{font-size:28px}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="tabs" aria-label="Pages">
+    <a href="./"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Heatmap</a>
+    <a href="insights.html" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Insights</a>
+  </nav>  <header>
+    <a class="brand" href="https://f3sactown.com/" aria-label="F3 SacTown home"><img src="icons/icon-192.png" alt="F3 SacTown logo" width="76" height="76"></a>
+    <div class="eyebrow">F3 SacTown · Master Data</div>
+    <h1 id="title">Insights</h1>
+    <p class="lede">How the region is posting: totals, trends, which AOs land in the 8–15 sweet spot, and who's leading the way. Pick a period below.</p>
+  </header>
+
+  <div class="controls">
+    <div class="period" id="period" role="group" aria-label="Period"></div>
+    <span class="range" id="range"></span>
+  </div>
+  <span class="source" id="source" style="margin-top:-12px">Loading…</span>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section class="panel">
+    <h2 id="trendTitle">Posts per week</h2>
+    <p class="sub">Total posts in each <span id="trendUnit">week</span>. Hover or tap a bar for workouts and unique PAX.</p>
+    <div><div class="cols" id="trend"></div><div class="xlab" id="trendX"></div></div>
+  </section>
+
+  <section class="panel">
+    <h2>Workout size</h2>
+    <p class="sub">How many workouts had each PAX count. The gold band is the 8–15 ideal; past 18, DRTF (diminishing returns to fellowship) sets in.</p>
+    <div class="hist"><div class="cols" id="hist"></div><div class="xlab" id="histX"></div></div>
+  </section>
+
+  <div class="two">
+    <section class="panel">
+      <h2>By day of week</h2>
+      <p class="sub">Average PAX per workout, with the number of workouts.</p>
+      <div class="hbars" id="dow"></div>
+    </section>
+    <section class="panel">
+      <h2>By workout style</h2>
+      <p class="sub">Total posts by style from the Sites tab, with average PAX.</p>
+      <div class="hbars" id="style"></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>AOs</h2>
+    <p class="sub">Tap a column to sort; one-off events stay at the bottom. Change compares average PAX with the previous period of the same length.</p>
+    <div class="tbl-wrap"><table class="t" id="aoTable"></table></div>
+  </section>
+
+  <section class="panel">
+    <h2>PAX</h2>
+    <p class="sub">Posts, Qs and how many different AOs each PAX visited in the period.</p>
+    <div class="tools"><input type="search" id="paxSearch" placeholder="Find a PAX" aria-label="Find a PAX"></div>
+    <div class="tbl-wrap"><table class="t" id="paxTable"></table></div>
+    <button class="more" id="paxMore" type="button"></button>
+  </section>
+
+  <div class="two">
+    <section class="panel">
+      <h2>New PAX</h2>
+      <p class="sub">First post on record during the period, with where they started.</p>
+      <ul class="list" id="newPax"></ul>
+    </section>
+    <section class="panel">
+      <h2>Missing in action</h2>
+      <p class="sub" id="miaSub">Regulars (10+ posts) whose last post was 3 to 26 weeks ago. Worth a call.</p>
+      <ul class="list" id="mia"></ul>
+    </section>
+  </div>
+
+  <p class="notes">Counts follow the same rules as the heatmap: Post column only, Q-Source rows left out, a PAX listed twice at the same workout counts once. The sheet starts in January 2025, so "New PAX" only counts from February 2025 on. Day and style come from the Sites tab; AOs not listed there show as Other.</p>
+  <p class="notes">Max of 18: past 18 PAX at a workout, DRTF (diminishing returns to fellowship) sets in. <cite>Freed to Lead</cite>, Chapter 4.</p>
+  <footer class="foot" id="foot"></footer>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script src="data.js"></script>
+<script src="site.js"></script>
+<script src="insights.js"></script>
+</body>
+</html>
