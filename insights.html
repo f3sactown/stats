@@ -12,7 +12,7 @@
 <script>try{const t=localStorage.getItem("hm-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="site.css?v=15">
+<link rel="stylesheet" href="site.css?v=16">
 <style>
 /* Insights: KPI tiles, charts and leaderboards for a chosen period */
 /* Date range picker: one button that opens presets + an exact start/end range */
@@ -43,13 +43,15 @@
 .pick-actions button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 @media (max-width:560px){.pick-pop{grid-template-columns:1fr}.pick-presets{grid-template-columns:1fr 1fr;border-right:0;border-bottom:1px solid var(--line)}.pick-custom .dates{grid-template-columns:1fr}.pick-btn{flex-wrap:wrap;row-gap:2px}}
 
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:4px;align-content:start}
-.kpi>span{font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
-.kpi b{font-family:var(--display);font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
-.kpi small{font-family:var(--mono);font-size:11px;color:var(--muted)}
-.kpi small .up::before{content:"▲ "}.kpi small .down::before{content:"▼ "}
-.kpi small .up,.kpi small .down{color:var(--ink)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px 12px;display:grid;gap:6px;align-content:start;grid-template-rows:auto auto auto 1fr}
+.kpi .lab{font-size:15px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;gap:6px}
+.kpi b{font-family:var(--display);font-size:42px;line-height:1;font-variant-numeric:tabular-nums}
+.kpi small{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.kpi small .up{color:var(--good)}.kpi small .down{color:var(--bad)}
+.kpi .spark{width:100%;height:30px;align-self:end;margin-top:6px;overflow:visible}
+.kpi .spark polyline{fill:none;stroke:var(--h4);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+.panel h2 .info{vertical-align:2px}
 
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:grid;gap:12px;min-width:0;align-content:start}
 .panel h2{font-family:var(--display);font-size:24px;font-weight:700;margin:0;line-height:1.05;letter-spacing:.01em}
@@ -116,20 +118,16 @@ table.t tr:last-child td{border-bottom:0}
 
 [data-theme="dark"] .cols .band{--band-mix:9%}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cols .band{--band-mix:9%}}
-#tip{position:fixed;z-index:10;pointer-events:none;background:var(--ink);color:var(--bg);font:500 12px var(--mono);padding:6px 8px;border-radius:5px;white-space:pre;line-height:1.5;opacity:0;transition:opacity .08s}
-#tip.on{opacity:1}
-@media (max-width:600px){.cols{height:160px;padding-left:28px}.cols .gl{left:28px}.xlab{padding-left:28px}.hb{grid-template-columns:8.6em 1fr auto;font-size:13px}.kpi b{font-size:28px}}
+@media (max-width:600px){.cols{height:160px;padding-left:28px}.cols .gl{left:28px}.xlab{padding-left:28px}.hb{grid-template-columns:8.6em 1fr auto;font-size:13px}.kpis{grid-template-columns:1fr 1fr;gap:8px}.kpi{padding:12px}.kpi .lab{font-size:13px}.kpi b{font-size:30px}}
 </style>
 </head>
-<body>
+<body data-page="insights" data-title="Insights">
 
 <div class="wrap">
-  <nav class="tabs" aria-label="Pages">
-    <a href="./"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Heatmap</a>
-    <a href="insights.html" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Insights</a>
-  </nav>  <header>
+  <nav class="tabs" id="tabs" aria-label="Pages"></nav>
+  <header>
     <a class="brand" href="https://f3sactown.com/" aria-label="F3 SacTown home"><img src="icons/icon-192.png" alt="F3 SacTown logo" width="76" height="76"></a>
-    <div class="eyebrow">F3 SacTown · Master Data</div>
+    <div class="eyebrow"><span data-brand>F3 SacTown</span> · Workout data</div>
     <h1 id="title">Insights</h1>
     <p class="lede">How the region is posting: totals, trends, which AOs land in the 8–15 sweet spot, where PAX come from, and who's leading the way. Pick a date range below.</p>
   </header>
@@ -157,73 +155,74 @@ table.t tr:last-child td{border-bottom:0}
   </div>
   <span class="source" id="source" style="margin-top:-12px">Loading…</span>
 
-  <div class="kpis" id="kpis"></div>
+  <div class="kpis needs-data" id="kpis"></div>
 
-  <section class="panel">
-    <h2 id="trendTitle">Posts per week</h2>
+  <section class="panel needs-data">
+    <h2><span id="trendTitle">Posts per week</span><span data-info="trend" data-what="Posts over time"></span></h2>
     <p class="sub">Total posts in each <span id="trendUnit">week</span>. Hover or tap a bar for workouts and unique PAX.</p>
     <div><div class="cols" id="trend"></div><div class="xlab" id="trendX"></div></div>
   </section>
 
-  <section class="panel">
-    <h2>Workout size</h2>
+  <section class="panel needs-data">
+    <h2>Workout size<span data-info="hist" data-what="Workout size"></span></h2>
     <p class="sub">How many workouts had each PAX count. The gold band is the 8–15 ideal; past 18, DRTF (diminishing returns to fellowship) sets in.</p>
     <div class="hist"><div class="cols" id="hist"></div><div class="xlab" id="histX"></div></div>
   </section>
 
-  <div class="three">
-    <section class="panel">
-      <h2>By day of week</h2>
+  <div class="three needs-data">
+    <section class="panel needs-data">
+      <h2>By day of week<span data-info="dow" data-what="By day of week"></span></h2>
       <p class="sub">Average PAX per workout, with the number of workouts.</p>
       <div class="hbars" id="dow"></div>
     </section>
-    <section class="panel">
-      <h2>By city</h2>
+    <section class="panel needs-data">
+      <h2>By city<span data-info="city" data-what="By city"></span></h2>
       <p class="sub">Total posts by AO city from the Sites tab, with average PAX.</p>
       <div class="hbars" id="city"></div>
     </section>
-    <section class="panel">
-      <h2>Home region</h2>
+    <section class="panel needs-data">
+      <h2>Home region<span data-info="region" data-what="Home region"></span></h2>
       <p class="sub">Posts by each PAX's region on the Roster, with how many PAX.</p>
       <div class="hbars" id="region"></div>
     </section>
   </div>
 
-  <section class="panel">
-    <h2>AOs</h2>
+  <section class="panel needs-data">
+    <h2>AOs<span data-info="ao" data-what="AO table"></span></h2>
     <p class="sub">Tap a column to sort; one-off events stay at the bottom. Change compares average PAX with the comparison period shown on the totals.</p>
     <div class="tbl-wrap"><table class="t" id="aoTable"></table></div>
   </section>
 
-  <section class="panel">
-    <h2>PAX</h2>
+  <section class="panel needs-data">
+    <h2>PAX<span data-info="pax" data-what="PAX table"></span></h2>
     <p class="sub">Posts, Qs and how many different AOs each PAX visited in the period.</p>
     <div class="tools"><input type="search" id="paxSearch" placeholder="Find a PAX" aria-label="Find a PAX"></div>
     <div class="tbl-wrap"><table class="t" id="paxTable"></table></div>
     <button class="more" id="paxMore" type="button"></button>
   </section>
 
-  <div class="two">
-    <section class="panel">
-      <h2>New PAX</h2>
+  <div class="two needs-data">
+    <section class="panel needs-data">
+      <h2>New PAX<span data-info="newpax" data-what="New PAX"></span></h2>
       <p class="sub" id="newPaxSub"></p>
       <ul class="list" id="newPax"></ul>
     </section>
-    <section class="panel">
-      <h2>Missing in action</h2>
+    <section class="panel needs-data">
+      <h2>Missing in action<span data-info="mia" data-what="Missing in action"></span></h2>
       <p class="sub" id="miaSub">Regulars (10+ posts) whose last post was 3 to 26 weeks ago. Worth a call.</p>
       <ul class="list" id="mia"></ul>
     </section>
   </div>
 
-  <p class="notes">Counts follow the same rules as the heatmap: Post column only, Q-Source rows left out, a PAX listed twice at the same workout counts once. AOs marked "Q Source Only" on the Sites tab are left out. New PAX are SacTown PAX whose Date Joined on the Roster is in the period; the Roster starts in January 2025 with existing PAX, so New PAX only count from February 2025 on. Day and city come from the Sites tab and home region from the Roster; AOs or PAX not listed there show as Other or Not on roster.</p>
+  <p class="notes">Counts follow the same rules as the heatmap: only rows marked as a post count, Q-Source rows are left out, and a PAX listed twice at the same workout counts once. AOs marked Q-Source-only on the Sites tab are left out. Tap any ⓘ to see exactly which columns a card or chart uses and how it's calculated. Which sheet, tabs and columns are read is set on the Settings page.</p>
   <p class="notes">Max of 18: past 18 PAX at a workout, DRTF (diminishing returns to fellowship) sets in. <cite>Freed to Lead</cite>, Chapter 4.</p>
   <footer class="foot" id="foot"></footer>
 </div>
-<div id="tip" role="tooltip"></div>
 
-<script src="data.js?v=15"></script>
-<script src="site.js?v=15"></script>
-<script src="insights.js?v=15"></script>
+<script src="site-config.js?v=16"></script>
+<script src="config.js?v=16"></script>
+<script src="data.js?v=16"></script>
+<script src="site.js?v=16"></script>
+<script src="insights.js?v=16"></script>
 </body>
 </html>
