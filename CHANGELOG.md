@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.7.1 (build 14) - 2026-11-23
+
+- Fix: right after a release, browsers could load the new page with an old cached script, leaving the Insights page half empty. Shared CSS and JS links now carry the build number (`?v=14`), which `scripts/bump.sh` updates on every release, so the page and its scripts always match.
+
 ## v1.7.0 (build 13) - 2026-11-23
 
 - The site now uses only these sheet columns: Master Data (Post Date, AO Name, PAX Name, FNG, Post, Q, QSource, Q QSource), Sites (AO Name, Day, City, Q Source, Q Source Only, Retired) and Roster (F3 Name, Date Joined, Region). Sites Style, Area and Launch are no longer read or stored.
