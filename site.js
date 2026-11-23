@@ -1,6 +1,6 @@
 // Shared by every page: version number, page footer and the Light / Dark / System switch.
-const APP_VERSION = "1.7.1";
-const APP_BUILD = 14;
+const APP_VERSION = "1.8.0";
+const APP_BUILD = 15;
 
 (function(){
   const foot=document.getElementById("foot");if(!foot)return;

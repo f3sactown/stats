@@ -13,7 +13,7 @@ const MIA_MIN_POSTS = 10, MIA_FROM_DAYS = 21, MIA_TO_DAYS = 182;
 const PAX_ROWS = 25;
 
 let WORKOUTS = [], SITES = sitesFromSnapshot(), ROSTER = null, FIRST = new Map();
-let PERIODS = [], CUR = null;
+let CUR = null;   // current date range {k,label,a,b,pa,pb,prior}; a/b are day numbers
 const aoSort = {key:"avg",dir:-1}, paxSort = {key:"posts",dir:-1};
 let paxAll = false;
 
@@ -32,29 +32,11 @@ function prep(){
   WORKOUTS.sort((a,b) => a.t-b.t || a.ao.localeCompare(b.ao));
   FIRST = new Map();
   for (const w of WORKOUTS) for (const p of w.pax) if (!FIRST.has(p)) FIRST.set(p, w);
-  buildPeriods();
 }
 function siteOf(ao){
   if (isEvent(ao)) return {city:"Event", day:"", retired:false};
   const s = SITES.get(ao);
   return s ? {...s, city: s.city || "Other"} : {city:"Other", day:"", retired:false};
-}
-function buildPeriods(){
-  const end = WORKOUTS[WORKOUTS.length-1].t, start = WORKOUTS[0].t;
-  const endD = dOf(end), years = [...new Set(WORKOUTS.map(w => w.y))].sort((a,b) => b-a);
-  PERIODS = [
-    {k:"4w",  label:"Last 4 weeks",  a:end-27, b:end, pa:end-55,  pb:end-28, prior:"prior 4 weeks"},
-    {k:"13w", label:"Last 13 weeks", a:end-90, b:end, pa:end-181, pb:end-91, prior:"prior 13 weeks"},
-    ...years.map(y => {
-      const a = Date.UTC(y,0,1)/DAY, full = Date.UTC(y,11,31)/DAY, b = Math.min(full, end);
-      const partial = b < full;
-      const pb = partial ? Date.UTC(y-1, endD.getUTCMonth(), endD.getUTCDate())/DAY : Date.UTC(y-1,11,31)/DAY;
-      return {k:String(y), label: partial ? `${y} to date` : String(y), a, b, pa:Date.UTC(y-1,0,1)/DAY, pb,
-              prior: partial ? `same span of ${y-1}` : String(y-1)};
-    }),
-    {k:"all", label:"All time", a:start, b:end}
-  ];
-  PERIODS.forEach(p => { if (p.pa != null && !WORKOUTS.some(w => w.t >= p.pa && w.t <= p.pb)) p.pa = p.pb = p.prior = null });
 }
 const inRange = (a,b) => WORKOUTS.filter(w => w.t >= a && w.t <= b);
 
@@ -66,31 +48,92 @@ function summarize(ws, a, b){
           idealPct: ws.length ? ws.filter(w => ideal(w.n)).length/ws.length*100 : 0, fresh};
 }
 
-// ---- Period picker ---------------------------------------------------------
-function drawPeriods(){
-  $("period").innerHTML = PERIODS.map(p => `<button type="button" data-k="${p.k}" aria-pressed="${p.k===CUR.k}">${p.label}</button>`).join("");
+// ---- Date range picker ---------------------------------------------------
+// Presets plus an exact custom range. Each range carries the earlier period
+// its change figures compare against (pa..pb).
+const todayT = () => { const n = new Date(); return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate())/DAY };
+const ymd = (y,m,d) => Date.UTC(y,m,d)/DAY;            // month is 0-based; overflow rolls over
+const iso = t => dOf(t).toISOString().slice(0,10);
+const fromIso = v => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v||""); return m ? Date.UTC(+m[1], m[2]-1, +m[3])/DAY : null };
+
+function withPrior(r){
+  if (r.pa == null && r.k !== "all"){ const len = r.b - r.a + 1; r.pa = r.a - len; r.pb = r.a - 1; r.prior = `prior ${len} days` }
+  if (r.pa != null && !WORKOUTS.some(w => w.t >= r.pa && w.t <= r.pb)) r.pa = r.pb = r.prior = null;
+  return r;
 }
-$("period").addEventListener("click", e => {
-  const b = e.target.closest("button[data-k]"); if (!b) return;
-  CUR = PERIODS.find(p => p.k === b.dataset.k); paxAll = false;
-  try { localStorage.setItem("ins-period", CUR.k) } catch(e) {}
-  history.replaceState(null, "", "#p" + CUR.k);
-  render();
+function presets(){
+  const t = todayT(), d = dOf(t), y = d.getUTCFullYear(), m = d.getUTCMonth(), day = d.getUTCDate();
+  return [
+    {k:"this-month", label:"This month",   a:ymd(y,m,1),   b:t,             pa:ymd(y,m-1,1), pb:Math.min(ymd(y,m-1,day), ymd(y,m,0)), prior:"same days last month"},
+    {k:"last-month", label:"Last month",   a:ymd(y,m-1,1), b:ymd(y,m,0),    pa:ymd(y,m-2,1), pb:ymd(y,m-1,0), prior:"the month before"},
+    {k:"last-30",    label:"Last 30 days", a:t-29,         b:t},
+    {k:"last-90",    label:"Last 90 days", a:t-89,         b:t},
+    {k:"this-year",  label:"This year",    a:ymd(y,0,1),   b:t,             pa:ymd(y-1,0,1), pb:ymd(y-1,m,day), prior:"same span last year"},
+    {k:"last-year",  label:"Last year",    a:ymd(y-1,0,1), b:ymd(y-1,11,31),pa:ymd(y-2,0,1), pb:ymd(y-2,11,31), prior:String(y-2)},
+    {k:"all",        label:"All time",     a:WORKOUTS[0].t, b:Math.max(t, WORKOUTS[WORKOUTS.length-1].t)}
+  ].map(withPrior);
+}
+const customRange = (a,b) => withPrior({k:"custom", label:"Custom", a, b});
+
+// URL hash: #this-year, #last-month, ... or #2026-01-01_2026-03-31 (older #p4w / #p2026 links still work)
+function rangeFromKey(k){
+  if (!k) return null;
+  const old = {p4w:"last-30", p13w:"last-90", pall:"all"}[k]; if (old) k = old;
+  let m = /^p(\d{4})$/.exec(k); if (m) return customRange(ymd(+m[1],0,1), ymd(+m[1],11,31));
+  m = /^(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})$/.exec(k);
+  if (m){ const a = fromIso(m[1]), b = fromIso(m[2]); return a != null && b != null && a <= b ? customRange(a,b) : null }
+  return presets().find(p => p.k === k) || null;
+}
+const keyOf = r => r.k === "custom" ? `${iso(r.a)}_${iso(r.b)}` : r.k;
+function pickRange(keep){
+  let r = keep ? rangeFromKey(keyOf(keep)) : rangeFromKey(location.hash.slice(1));
+  if (!r) try { r = rangeFromKey(localStorage.getItem("ins-range")) } catch(e) {}
+  CUR = r || rangeFromKey("this-year");
+}
+function setRange(r){
+  CUR = r; paxAll = false;
+  try { localStorage.setItem("ins-range", keyOf(r)) } catch(e) {}
+  history.replaceState(null, "", "#" + keyOf(r));
+  closePicker(); render();
+}
+
+const pickBtn = $("pickBtn"), pickPop = $("pickPop");
+function drawPicker(){
+  $("pickLabel").textContent = CUR.label;
+  $("range").textContent = `${long(CUR.a)} – ${long(CUR.b)}`;
+  $("presets").innerHTML = presets().map(p => `<button type="button" data-k="${p.k}" aria-pressed="${p.k===CUR.k}">${p.label}</button>`).join("");
+}
+function openPicker(){
+  const lo = iso(WORKOUTS[0].t), hi = iso(Math.max(todayT(), WORKOUTS[WORKOUTS.length-1].t));
+  for (const el of [$("dStart"), $("dEnd")]) { el.min = lo; el.max = hi }
+  $("dStart").value = iso(CUR.a); $("dEnd").value = iso(CUR.b); $("pickErr").textContent = "";
+  pickPop.hidden = false; pickBtn.setAttribute("aria-expanded", "true");
+  (pickPop.querySelector('[aria-pressed="true"]') || $("dStart")).focus();
+}
+function closePicker(refocus){
+  if (pickPop.hidden) return;
+  pickPop.hidden = true; pickBtn.setAttribute("aria-expanded", "false");
+  if (refocus) pickBtn.focus();
+}
+pickBtn.addEventListener("click", () => pickPop.hidden ? openPicker() : closePicker());
+$("presets").addEventListener("click", e => { const b = e.target.closest("button[data-k]"); if (b) setRange(rangeFromKey(b.dataset.k)) });
+$("pickCancel").addEventListener("click", () => closePicker(true));
+$("pickForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const a = fromIso($("dStart").value), b = fromIso($("dEnd").value);
+  if (a == null || b == null) { $("pickErr").textContent = "Pick both a start and an end date."; return }
+  if (a > b) { $("pickErr").textContent = "The start date has to be on or before the end date."; return }
+  setRange(customRange(a, b));
 });
-function pickPeriod(keep){
-  const h = location.hash.match(/^#p(\w+)$/);
-  let k = keep || (h && h[1]);
-  if (!k) try { k = localStorage.getItem("ins-period") } catch(e) {}
-  CUR = PERIODS.find(p => p.k === k) || PERIODS.find(p => p.k === String(dOf(WORKOUTS[WORKOUTS.length-1].t).getUTCFullYear())) || PERIODS[0];
-}
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !pickPop.hidden) closePicker(true) });
+document.addEventListener("pointerdown", e => { if (!pickPop.hidden && !e.target.closest("#picker")) closePicker() });
 
 // ---- Render ----------------------------------------------------------------
 function render(){
-  drawPeriods();
+  drawPicker();
   const ws = inRange(CUR.a, CUR.b);
   const prev = CUR.pa != null ? inRange(CUR.pa, CUR.pb) : null;
-  $("range").textContent = `${long(CUR.a)} – ${long(CUR.b)}`;
-  document.title = `${CUR.label} · SacTown Insights`;
+  document.title = `${CUR.k === "custom" ? `${short(CUR.a)} – ${long(CUR.b)}` : CUR.label} · SacTown Insights`;
   kpis(ws, prev);
   trend(ws);
   histogram(ws);
@@ -107,7 +150,7 @@ function kpis(ws, prev){
   const s = summarize(ws, CUR.a, CUR.b), p = prev && prev.length ? summarize(prev, CUR.pa, CUR.pb) : null;
   const pct = (a,b) => b ? Math.round((a-b)/b*100) : null;
   const dl = (d, unit="%") => d == null ? "" : d === 0 ? `<span>no change</span>` :
-    `<span class="${d>0?"up":"down"}">${Math.abs(d)}${unit}</span>`;
+    `<span class="${d>0?"up":"down"}">${unit === "" ? Math.abs(d).toFixed(1) : Math.abs(d)}${unit}</span>`;
   const tiles = [
     ["Workouts", fmt(s.workouts), p && pct(s.workouts, p.workouts)],
     ["Total posts", fmt(s.posts), p && pct(s.posts, p.posts)],
@@ -129,25 +172,28 @@ function nice(max){
 function grid(max){ return [max, max/2].map(v => `<div class="gl" style="bottom:${v/max*100}%"><span>${fmt(Math.round(v))}</span></div>`).join("") }
 
 function trend(ws){
-  const span = CUR.b - CUR.a + 1, monthly = span > 400;
+  const span = CUR.b - CUR.a + 1, monthly = span > 400, daily = span <= 45;
   const buckets = new Map();
-  const keyOf = monthly ? w => w.y*100+w.m : w => w.t - ((w.dow+6)%7);
-  if (monthly){
+  const bucketOf = monthly ? w => w.y*100+w.m : daily ? w => w.t : w => w.t - ((w.dow+6)%7);
+  if (daily){
+    for (let t = CUR.a; t <= CUR.b; t++) buckets.set(t, []);
+  } else if (monthly){
     const a = dOf(CUR.a), b = dOf(CUR.b);
     for (let y=a.getUTCFullYear(), m=a.getUTCMonth()+1; y*100+m <= b.getUTCFullYear()*100+b.getUTCMonth()+1; m===12 ? (y++, m=1) : m++) buckets.set(y*100+m, []);
   } else {
     const first = CUR.a - ((dOf(CUR.a).getUTCDay()+6)%7);
     for (let t = first; t <= CUR.b; t += 7) buckets.set(t, []);
   }
-  ws.forEach(w => { const k = keyOf(w); if (buckets.has(k)) buckets.get(k).push(w) });
+  ws.forEach(w => { const k = bucketOf(w); if (buckets.has(k)) buckets.get(k).push(w) });
   const rows = [...buckets].map(([k, list]) => {
     const pax = new Set(); list.forEach(w => w.pax.forEach(p => pax.add(p)));
     const label = monthly ? `${MON[k%100-1].slice(0,3)}${k%100===1 || k===[...buckets.keys()][0] ? " ’"+String(Math.floor(k/100)).slice(2) : ""}` : short(k);
-    const full = monthly ? `${MON[k%100-1]} ${Math.floor(k/100)}` : `Week of ${long(k)}`;
+    const full = monthly ? `${MON[k%100-1]} ${Math.floor(k/100)}` : daily ? `${DOW_FULL[dOf(k).getUTCDay()]}, ${long(k)}` : `Week of ${long(k)}`;
     return {label, full, posts:list.reduce((s,w) => s+w.n, 0), workouts:list.length, unique:pax.size};
   });
-  $("trendTitle").textContent = monthly ? "Posts per month" : "Posts per week";
-  $("trendUnit").textContent = monthly ? "month" : "week";
+  const unit = monthly ? "month" : daily ? "day" : "week";
+  $("trendTitle").textContent = `Posts per ${unit}`;
+  $("trendUnit").textContent = unit;
   const max = nice(Math.max(1, ...rows.map(r => r.posts)));
   $("trend").innerHTML = grid(max) + rows.map(r =>
     `<div class="bar" data-tip="${esc(r.full)}\n${fmt(r.posts)} posts · ${r.workouts} workouts\n${r.unique} unique PAX"><i style="height:${r.posts/max*100}%"></i></div>`).join("");
@@ -335,14 +381,14 @@ addEventListener("scroll", () => { tip.classList.remove("on"); document.querySel
 
 // ---- Start: snapshot first, then live sheet data ----------------------------
 const src = $("source");
-WORKOUTS = fromSnapshot(); prep(); pickPeriod(); render();
+WORKOUTS = fromSnapshot(); prep(); pickRange(); render();
 src.textContent = `Snapshot from ${SNAPSHOT_DATE} · checking the sheet…`;
 Promise.allSettled([fetchCSV(SHEET_CSV_URL), fetchCSV(SITES_CSV_URL), fetchCSV(ROSTER_CSV_URL)]).then(([m, s, ro]) => {
   if (s.status === "fulfilled") try { const live = sitesFromRows(s.value); if (live.size) SITES = live } catch(e) {}
   if (ro.status === "fulfilled") try { const live = rosterFromRows(ro.value); if (live.size) ROSTER = live } catch(e) {}
   let live = null;
   if (m.status === "fulfilled") try { const l = fromRows(m.value); if (l.length >= 50) live = l } catch(e) {}
-  const keep = CUR.k; WORKOUTS = live || fromSnapshot(); prep(); pickPeriod(keep); render();
+  const keep = CUR; WORKOUTS = live || fromSnapshot(); prep(); pickRange(keep); render();
   src.textContent = live ? `Live from the Google Sheet · ${new Date().toLocaleString([], {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"})}`
     : `Showing snapshot from ${SNAPSHOT_DATE} (couldn't reach the sheet)`;
 });
