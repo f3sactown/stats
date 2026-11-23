@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.7.0 (build 13) - 2026-11-23
+
+- The site now uses only these sheet columns: Master Data (Post Date, AO Name, PAX Name, FNG, Post, Q, QSource, Q QSource), Sites (AO Name, Day, City, Q Source, Q Source Only, Retired) and Roster (F3 Name, Date Joined, Region). Sites Style, Area and Launch are no longer read or stored.
+- Insights: "By workout style" is replaced by **By city**, and AO rows show day · city. New **Home region** chart shows posts by each PAX's Roster region.
+- Insights: **New PAX** now comes from the Roster's Date Joined (SacTown PAX), falling back to first post if the Roster can't be read. AOs marked Q Source Only on Sites are left out.
+
 ## v1.6.0 (build 12) - 2026-11-22
 
 - New **Insights** page, linked from Heatmap / Insights tabs at the top of both pages. Pick a period (last 4 or 13 weeks, a year, or all time) to see totals with change vs the prior period, posts per week or month, a workout-size histogram with the 8–15 ideal and the 18 DRTF line, average PAX by day and posts by style, sortable AO and PAX tables, new PAX, and regulars who have gone quiet. Day and style come from the Sites tab.

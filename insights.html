@@ -30,11 +30,13 @@
 .kpi small .up::before{content:"▲ "}.kpi small .down::before{content:"▼ "}
 .kpi small .up,.kpi small .down{color:var(--ink)}
 
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:grid;gap:12px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:grid;gap:12px;min-width:0;align-content:start}
 .panel h2{font-family:var(--display);font-size:24px;font-weight:700;margin:0;line-height:1.05;letter-spacing:.01em}
 .panel .sub{margin:-6px 0 0;font-size:13px;color:var(--muted)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
 @media (max-width:760px){.two{grid-template-columns:1fr}}
+.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}
+@media (max-width:600px){.three{grid-template-columns:1fr}}
 
 /* column charts */
 .cols{position:relative;height:200px;display:flex;align-items:flex-end;gap:2px;padding-left:34px;border-bottom:1px solid var(--line)}
@@ -53,7 +55,7 @@
 
 /* horizontal bars */
 .hbars{display:grid;gap:6px}
-.hb{display:grid;grid-template-columns:86px 1fr auto;align-items:center;gap:10px;font-size:14px}
+.hb{display:grid;grid-template-columns:8.6em 1fr auto;align-items:center;gap:10px;font-size:14px}
 .hb .lab{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hb .track{height:18px;position:relative}
 .hb .track i{position:absolute;inset:0 auto 0 0;background:var(--h4);border-radius:0 4px 4px 0}
@@ -95,7 +97,7 @@ table.t tr:last-child td{border-bottom:0}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cols .band{--band-mix:9%}}
 #tip{position:fixed;z-index:10;pointer-events:none;background:var(--ink);color:var(--bg);font:500 12px var(--mono);padding:6px 8px;border-radius:5px;white-space:pre;line-height:1.5;opacity:0;transition:opacity .08s}
 #tip.on{opacity:1}
-@media (max-width:600px){.cols{height:160px;padding-left:28px}.cols .gl{left:28px}.xlab{padding-left:28px}.hb{grid-template-columns:72px 1fr auto;font-size:13px}.kpi b{font-size:28px}}
+@media (max-width:600px){.cols{height:160px;padding-left:28px}.cols .gl{left:28px}.xlab{padding-left:28px}.hb{grid-template-columns:8.6em 1fr auto;font-size:13px}.kpi b{font-size:28px}}
 </style>
 </head>
 <body>
@@ -108,7 +110,7 @@ table.t tr:last-child td{border-bottom:0}
     <a class="brand" href="https://f3sactown.com/" aria-label="F3 SacTown home"><img src="icons/icon-192.png" alt="F3 SacTown logo" width="76" height="76"></a>
     <div class="eyebrow">F3 SacTown · Master Data</div>
     <h1 id="title">Insights</h1>
-    <p class="lede">How the region is posting: totals, trends, which AOs land in the 8–15 sweet spot, and who's leading the way. Pick a period below.</p>
+    <p class="lede">How the region is posting: totals, trends, which AOs land in the 8–15 sweet spot, where PAX come from, and who's leading the way. Pick a period below.</p>
   </header>
 
   <div class="controls">
@@ -131,16 +133,21 @@ table.t tr:last-child td{border-bottom:0}
     <div class="hist"><div class="cols" id="hist"></div><div class="xlab" id="histX"></div></div>
   </section>
 
-  <div class="two">
+  <div class="three">
     <section class="panel">
       <h2>By day of week</h2>
       <p class="sub">Average PAX per workout, with the number of workouts.</p>
       <div class="hbars" id="dow"></div>
     </section>
     <section class="panel">
-      <h2>By workout style</h2>
-      <p class="sub">Total posts by style from the Sites tab, with average PAX.</p>
-      <div class="hbars" id="style"></div>
+      <h2>By city</h2>
+      <p class="sub">Total posts by AO city from the Sites tab, with average PAX.</p>
+      <div class="hbars" id="city"></div>
+    </section>
+    <section class="panel">
+      <h2>Home region</h2>
+      <p class="sub">Posts by each PAX's region on the Roster, with how many PAX.</p>
+      <div class="hbars" id="region"></div>
     </section>
   </div>
 
@@ -161,7 +168,7 @@ table.t tr:last-child td{border-bottom:0}
   <div class="two">
     <section class="panel">
       <h2>New PAX</h2>
-      <p class="sub">First post on record during the period, with where they started.</p>
+      <p class="sub" id="newPaxSub"></p>
       <ul class="list" id="newPax"></ul>
     </section>
     <section class="panel">
@@ -171,7 +178,7 @@ table.t tr:last-child td{border-bottom:0}
     </section>
   </div>
 
-  <p class="notes">Counts follow the same rules as the heatmap: Post column only, Q-Source rows left out, a PAX listed twice at the same workout counts once. The sheet starts in January 2025, so "New PAX" only counts from February 2025 on. Day and style come from the Sites tab; AOs not listed there show as Other.</p>
+  <p class="notes">Counts follow the same rules as the heatmap: Post column only, Q-Source rows left out, a PAX listed twice at the same workout counts once. AOs marked "Q Source Only" on the Sites tab are left out. New PAX are SacTown PAX whose Date Joined on the Roster is in the period; the Roster starts in January 2025 with existing PAX, so New PAX only count from February 2025 on. Day and city come from the Sites tab and home region from the Roster; AOs or PAX not listed there show as Other or Not on roster.</p>
   <p class="notes">Max of 18: past 18 PAX at a workout, DRTF (diminishing returns to fellowship) sets in. <cite>Freed to Lead</cite>, Chapter 4.</p>
   <footer class="foot" id="foot"></footer>
 </div>

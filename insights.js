@@ -1,15 +1,18 @@
-// Insights page: KPIs, trend, workout-size histogram, day/style breakdowns,
-// AO and PAX leaderboards, new PAX and regulars gone quiet.
+// Insights page: KPIs, trend, workout-size histogram, day / city / home-region
+// breakdowns, AO and PAX leaderboards, new PAX and regulars gone quiet.
+// Sheet columns used: Master Data (Post Date, AO Name, PAX Name, Post, Q),
+// Sites (AO Name, Day, City, Q Source Only, Retired), Roster (F3 Name, Date Joined, Region).
 // Data and counting rules come from data.js, shared with the heatmap.
 
 const DAY = 864e5;
 const DOW_ORDER = [1,2,3,4,5,6,0];
 const DOW_FULL = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-const NEW_PAX_FROM = Date.UTC(2025,1,1)/DAY;   // sheet starts Jan 2025, so first posts before Feb 2025 aren't "new"
+const NEW_PAX_FROM = Date.UTC(2025,1,1)/DAY;   // roster and sheet start Jan 2025 with existing PAX, so joins before Feb 2025 aren't "new"
+const HOME_REGION = "SacTown";
 const MIA_MIN_POSTS = 10, MIA_FROM_DAYS = 21, MIA_TO_DAYS = 182;
 const PAX_ROWS = 25;
 
-let WORKOUTS = [], SITES = sitesFromSnapshot(), FIRST = new Map();
+let WORKOUTS = [], SITES = sitesFromSnapshot(), ROSTER = null, FIRST = new Map();
 let PERIODS = [], CUR = null;
 const aoSort = {key:"avg",dir:-1}, paxSort = {key:"posts",dir:-1};
 let paxAll = false;
@@ -24,6 +27,7 @@ const isEvent = ao => /^\d{4}\b/.test(ao);
 
 // ---- Preparing data --------------------------------------------------------
 function prep(){
+  WORKOUTS = WORKOUTS.filter(w => !(SITES.get(w.ao) || {}).qsourceOnly);   // Sites "Q Source Only" AOs aren't workouts
   WORKOUTS.forEach(w => { w.t = Date.UTC(w.y, w.m-1, w.d)/DAY; w.dow = dOf(w.t).getUTCDay() });
   WORKOUTS.sort((a,b) => a.t-b.t || a.ao.localeCompare(b.ao));
   FIRST = new Map();
@@ -31,8 +35,9 @@ function prep(){
   buildPeriods();
 }
 function siteOf(ao){
-  if (isEvent(ao)) return {style:"Event", day:"", retired:false};
-  return SITES.get(ao) || {style:"Other", day:"", retired:false};
+  if (isEvent(ao)) return {city:"Event", day:"", retired:false};
+  const s = SITES.get(ao);
+  return s ? {...s, city: s.city || "Other"} : {city:"Other", day:"", retired:false};
 }
 function buildPeriods(){
   const end = WORKOUTS[WORKOUTS.length-1].t, start = WORKOUTS[0].t;
@@ -56,8 +61,7 @@ const inRange = (a,b) => WORKOUTS.filter(w => w.t >= a && w.t <= b);
 function summarize(ws, a, b){
   const posts = ws.reduce((s,w) => s+w.n, 0), pax = new Set();
   ws.forEach(w => w.pax.forEach(p => pax.add(p)));
-  let fresh = 0;
-  for (const [p,w] of FIRST) if (w.t >= a && w.t <= b && w.t >= NEW_PAX_FROM) fresh++;
+  const fresh = newPaxList(a, b).length;
   return {workouts:ws.length, posts, unique:pax.size, avg: ws.length ? posts/ws.length : 0,
           idealPct: ws.length ? ws.filter(w => ideal(w.n)).length/ws.length*100 : 0, fresh};
 }
@@ -91,7 +95,8 @@ function render(){
   trend(ws);
   histogram(ws);
   byDow(ws);
-  byStyle(ws);
+  byCity(ws);
+  byRegion(ws);
   aoTable(ws, prev);
   paxTable(ws);
   newPax();
@@ -109,10 +114,10 @@ function kpis(ws, prev){
     ["Unique PAX", fmt(s.unique), p && pct(s.unique, p.unique)],
     ["Avg PAX / workout", s.avg.toFixed(1), p && +(s.avg-p.avg).toFixed(1), ""],
     [`In ${IDEAL_LO}–${IDEAL_HI} range`, Math.round(s.idealPct)+"%", p && Math.round(s.idealPct-p.idealPct), " pts"],
-    ["New PAX", fmt(s.fresh), p && pct(s.fresh, p.fresh)]
+    ["New PAX", fmt(s.fresh), p && pct(s.fresh, p.fresh), "%", p && p.fresh]
   ];
-  $("kpis").innerHTML = tiles.map(([l,v,d,u]) =>
-    `<div class="kpi"><span>${l}</span><b>${v}</b><small>${p ? `${dl(d,u)} vs ${CUR.prior}` : "&nbsp;"}</small></div>`).join("");
+  $("kpis").innerHTML = tiles.map(([l,v,d,u,was]) =>
+    `<div class="kpi"><span>${l}</span><b>${v}</b><small>${!p ? "&nbsp;" : d == null && was === 0 ? `0 in ${CUR.prior}` : `${dl(d,u)} vs ${CUR.prior}`}</small></div>`).join("");
 }
 
 function nice(max){
@@ -179,11 +184,11 @@ function byDow(ws){
   }).filter(r => r.workouts);
   hbars($("dow"), rows, r => r.avg, r => `<b>${r.avg.toFixed(1)}</b> · ${r.workouts}`);
 }
-function byStyle(ws){
+function byCity(ws){
   const m = new Map();
-  ws.forEach(w => { const s = siteOf(w.ao).style; if (!m.has(s)) m.set(s, {name:s, posts:0, workouts:0}); const r = m.get(s); r.posts += w.n; r.workouts++ });
+  ws.forEach(w => { const s = siteOf(w.ao).city; if (!m.has(s)) m.set(s, {name:s, posts:0, workouts:0}); const r = m.get(s); r.posts += w.n; r.workouts++ });
   const rows = [...m.values()].sort((a,b) => b.posts-a.posts);
-  hbars($("style"), rows, r => r.posts, r => `<b>${fmt(r.posts)}</b> · ${(r.posts/r.workouts).toFixed(1)} avg`);
+  hbars($("city"), rows, r => r.posts, r => `<b>${fmt(r.posts)}</b> · ${(r.posts/r.workouts).toFixed(1)} avg`);
 }
 
 // ---- Tables ----------------------------------------------------------------
@@ -218,7 +223,7 @@ function aoTable(ws, prev){
     const usual = site.day || DOW_FULL[Object.entries(list.reduce((c,w) => (c[w.dow]=(c[w.dow]||0)+1, c), {})).sort((a,b) => b[1]-a[1])[0][0]];
     const pl = before.get(ao), pavg = pl ? pl.reduce((s,w) => s+w.n, 0)/pl.length : null;
     const topQ = Object.entries(qs).sort((a,b) => b[1]-a[1])[0];
-    return {name:ao, day:usual, style:site.style, retired:site.retired, workouts:list.length, avg,
+    return {name:ao, day:usual, city:site.city, retired:site.retired, workouts:list.length, avg,
             idealPct: list.filter(w => ideal(w.n)).length/list.length*100, unique:pax.size,
             topQ: topQ ? `${topQ[0]} (${topQ[1]})` : "", change: pavg == null ? null : avg - pavg};
   });
@@ -228,9 +233,9 @@ function drawAo(){
   const t = $("aoTable");
   if (!AO_ROWS.length){ t.innerHTML = `<tbody><tr><td class="empty">No workouts in this period.</td></tr></tbody>`; return }
   const cols = [["name","AO"],["workouts","Workouts"],["avg","Avg PAX"],["idealPct",`In ${IDEAL_LO}–${IDEAL_HI}`],["unique","Unique PAX"],["topQ","Top Q","l"],["change","Change"]];
-  const sorted = sortRows(AO_ROWS, aoSort), rows = sorted.filter(r => r.style !== "Event").concat(sorted.filter(r => r.style === "Event"));
+  const sorted = sortRows(AO_ROWS, aoSort), rows = sorted.filter(r => r.city !== "Event").concat(sorted.filter(r => r.city === "Event"));
   t.innerHTML = thead(cols, aoSort) + "<tbody>" + rows.map(r =>
-    `<tr><td class="name">${esc(r.name)}${r.retired ? `<span class="tag">retired</span>` : ""}<small>${esc([r.day, r.style].filter(Boolean).join(" · "))}</small></td>
+    `<tr><td class="name">${esc(r.name)}${r.retired ? `<span class="tag">retired</span>` : ""}<small>${esc([r.day, r.city].filter(Boolean).join(" · "))}</small></td>
      <td>${r.workouts}</td><td>${chip(r.avg)}</td><td>${Math.round(r.idealPct)}%</td><td>${r.unique}</td>
      <td class="l">${esc(r.topQ) || "–"}</td>
      <td class="delta">${r.change == null ? "new" : (r.change >= 0 ? "▲ " : "▼ ") + Math.abs(r.change).toFixed(1)}</td></tr>`).join("") + "</tbody>";
@@ -265,11 +270,35 @@ $("paxSearch").addEventListener("input", drawPax);
 $("paxMore").addEventListener("click", () => { paxAll = !paxAll; drawPax() });
 
 function newPax(){
-  const list = [...FIRST].filter(([p,w]) => w.t >= CUR.a && w.t <= CUR.b && w.t >= NEW_PAX_FROM).sort((a,b) => b[1].t-a[1].t || a[0].localeCompare(b[0]));
-  $("newPax").innerHTML = list.length ? list.map(([p,w]) => `<li><span>${esc(p)}</span><span>${esc(w.ao)} · ${short(w.t)}</span></li>`).join("")
+  const list = newPaxList(CUR.a, CUR.b).sort((a,b) => b.t-a.t || a.name.localeCompare(b.name));
+  $("newPaxSub").textContent = ROSTER ? `${HOME_REGION} PAX whose Date Joined on the Roster falls in the period, with their first AO.`
+    : "First post on record during the period (the Roster tab couldn't be read).";
+  $("newPax").innerHTML = list.length ? list.map(r => `<li><span>${esc(r.name)}</span><span>${r.ao ? esc(r.ao) + " · " : ""}${short(r.t)}</span></li>`).join("")
     : `<li><span class="empty">No new PAX on record in this period.</span></li>`;
   $("newPax").style.cssText = list.length > 12 ? "max-height:440px;overflow:auto" : "";
 }
+// New PAX come from the Roster's Date Joined (home region only); without the
+// Roster, fall back to each PAX's first post on record.
+function newPaxList(a, b){
+  const from = Math.max(a, NEW_PAX_FROM);
+  if (ROSTER) return [...ROSTER].filter(([,r]) => r.region === HOME_REGION && r.joined >= from && r.joined <= b)
+    .map(([name,r]) => { const f = FIRST.get(name); return {name, t:r.joined, ao: f && f.t >= r.joined - 7 ? f.ao : ""} });
+  return [...FIRST].filter(([,w]) => w.t >= from && w.t <= b).map(([name,w]) => ({name, t:w.t, ao:w.ao}));
+}
+
+function byRegion(ws){
+  const el = $("region");
+  if (!ROSTER){ el.innerHTML = `<p class="empty">Needs the Roster tab, which couldn't be read.</p>`; return }
+  const m = new Map();
+  ws.forEach(w => w.pax.forEach(p => {
+    const reg = (ROSTER.get(p) || {}).region || "Not on roster";
+    if (!m.has(reg)) m.set(reg, {name:reg, posts:0, pax:new Set()});
+    const r = m.get(reg); r.posts++; r.pax.add(p);
+  }));
+  const rows = [...m.values()].sort((a,b) => (a.name==="Not on roster") - (b.name==="Not on roster") || b.posts - a.posts);
+  hbars(el, rows, r => r.posts, r => `<b>${fmt(r.posts)}</b> · ${r.pax.size} PAX`);
+}
+
 function mia(){
   const end = WORKOUTS[WORKOUTS.length-1].t, m = new Map();
   WORKOUTS.forEach(w => w.pax.forEach(p => {
@@ -308,10 +337,12 @@ addEventListener("scroll", () => { tip.classList.remove("on"); document.querySel
 const src = $("source");
 WORKOUTS = fromSnapshot(); prep(); pickPeriod(); render();
 src.textContent = `Snapshot from ${SNAPSHOT_DATE} · checking the sheet…`;
-Promise.allSettled([fetchCSV(SHEET_CSV_URL), fetchCSV(SITES_CSV_URL)]).then(([m, s]) => {
+Promise.allSettled([fetchCSV(SHEET_CSV_URL), fetchCSV(SITES_CSV_URL), fetchCSV(ROSTER_CSV_URL)]).then(([m, s, ro]) => {
   if (s.status === "fulfilled") try { const live = sitesFromRows(s.value); if (live.size) SITES = live } catch(e) {}
-  if (m.status !== "fulfilled") throw new Error("sheet");
-  const live = fromRows(m.value); if (live.length < 50) throw new Error("too few rows");
-  const keep = CUR.k; WORKOUTS = live; prep(); pickPeriod(keep); render();
-  src.textContent = `Live from the Google Sheet · ${new Date().toLocaleString([], {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"})}`;
-}).catch(() => { src.textContent = `Showing snapshot from ${SNAPSHOT_DATE} (couldn't reach the sheet)` });
+  if (ro.status === "fulfilled") try { const live = rosterFromRows(ro.value); if (live.size) ROSTER = live } catch(e) {}
+  let live = null;
+  if (m.status === "fulfilled") try { const l = fromRows(m.value); if (l.length >= 50) live = l } catch(e) {}
+  const keep = CUR.k; WORKOUTS = live || fromSnapshot(); prep(); pickPeriod(keep); render();
+  src.textContent = live ? `Live from the Google Sheet · ${new Date().toLocaleString([], {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"})}`
+    : `Showing snapshot from ${SNAPSHOT_DATE} (couldn't reach the sheet)`;
+});

@@ -32,6 +32,7 @@ function parseDate(s){
   s=(s||"").trim();let m;
   if(m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/))return{y:+m[3],m:+m[1],d:+m[2]};
   if(m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return{y:+m[1],m:+m[2],d:+m[3]};
+  if(/^\d{5}(\.0)?$/.test(s)){const dt=new Date((+s-25569)*864e5);return{y:dt.getUTCFullYear(),m:dt.getUTCMonth()+1,d:dt.getUTCDate()}} // sheet serial date
   return null;
 }
 function isOne(v){return String(v||"").trim()==="1"||String(v||"").trim()==="1.0"}
@@ -57,19 +58,33 @@ function fromSnapshot(){
 }
 
 
-// ---- Sites tab: day, style and area for each AO -------------------------
+// ---- Sites tab: only AO Name, Day, City, Q Source, Q Source Only, Retired --
 const SITES_CSV_URL = SHEET_CSV_URL.replace("sheet=Master%20Data","sheet=Sites");
-// Built-in copy of the Sites tab (Nov 22, 2026): [AO, day, style, area, launch, retired]
-const SITES_SNAPSHOT = [["Statehouse","Monday","Bootcamp","Downtown Sacramento","8/28/2023",""],["Chain Breakers","Monday","Bike","West Sacramento","6/29/2026","Y"],["The Ruff","Monday","Ruck","West Sacramento","6/29/2026",""],["The Rock","Tuesday","Bootcamp","Southeastern Sacramento","4/5/2022",""],["Talko Tuesday","Tuesday","Bootcamp","College/Glen","4/7/2026",""],["SafariLand","Tuesday","Bootcamp","SafariLand","7/7/2026",""],["The American","Wednesday","Run","Arden-Arcade","10/10/2022",""],["The Oak","Wednesday","Ruck","Arden-Arcade","3/6/2024",""],["The Beacon","Wednesday","Run","West Sacramento","3/25/2026",""],["Terminus","Thursday","Bootcamp","Old Sacramento","1/15/2026",""],["The River","Thursday","Bootcamp","College/Glen","9/8/2022",""],["The Burbs","Thursday","Bootcamp","Arden-Arcade","5/28/2024",""],["Camp West","Thursday","Bootcamp","Sundance Lake","11/9/2023","Y"],["McKinley","Friday","Bootcamp","East Sacramento","4/22/2022",""],["Ironstride","Friday","Run","East Sacramento","11/1/2024",""],["Rumble","Saturday","Bootcamp","East Sacramento","2/15/2025","Y"],["The Refinery","Saturday","Bootcamp","East Sacramento","1/4/2024",""],["The Gate","Saturday","Bootcamp","West Sacramento","2/7/2026",""],["Winds of Change","Saturday","Run","West Sacramento","6/6/2026",""],["The Lake","Sunday","Run","West Sacramento","11/8/2026",""],["Sunday Funday","Sunday","Bootcamp","Stone Creek","",""]];
-function cleanStyle(s){s=(s||"").split(/[\\/]/)[0].trim();return s||"Other"}
+// Built-in copy of the Sites tab (Nov 22, 2026): [AO, Day, City, Q Source, Q Source Only, Retired]
+const SITES_SNAPSHOT = [["Statehouse","Monday","Sacramento","","",""],["Chain Breakers","Monday","West Sacramento","","","Y"],["The Ruff","Monday","West Sacramento","","",""],["Q-Source","Monday","West Sacramento","TRUE","TRUE",""],["The Rock","Tuesday","Sacramento","","",""],["Talko Tuesday","Tuesday","Sacramento","","",""],["SafariLand","Tuesday","Sacramento","","",""],["The American","Wednesday","Sacramento","","",""],["The Oak","Wednesday","Sacramento","","",""],["The Beacon","Wednesday","West Sacramento","","",""],["Terminus","Thursday","Sacramento","","",""],["The River","Thursday","Sacramento","","",""],["The Burbs","Thursday","Sacramento","","",""],["Camp West","Thursday","Sacramento","","","Y"],["McKinley","Friday","Sacramento","TRUE","",""],["Ironstride","Friday","Sacramento","","",""],["Rumble","Saturday","Sacramento","","","Y"],["The Refinery","Saturday","Sacramento","","",""],["The Gate","Saturday","West Sacramento","","",""],["Winds of Change","Saturday","West Sacramento","","",""],["The Lake","Sunday","West Sacramento","","",""],["Sunday Funday","Sunday","Rancho Cordova","","",""]];
+const yes=v=>/^(true|y|yes|1)$/i.test(String(v||"").trim());
 function sitesFromRows(rows){
   const hdr=rows[0].map(h=>h.trim().toLowerCase()),ix=n=>hdr.indexOf(n);
-  const iA=ix("ao name"),iDay=ix("day"),iS=ix("style"),iAr=ix("area"),iL=ix("launch"),iR=ix("retired"),iQo=ix("q source only");
+  const iA=ix("ao name"),iDay=ix("day"),iC=ix("city"),iQ=ix("q source"),iQo=ix("q source only"),iR=ix("retired");
   if(iA<0)throw new Error("Sites headers not found");
   const map=new Map();
-  for(const r of rows.slice(1)){const ao=(r[iA]||"").trim();if(!ao||(iQo>=0&&/true|y/i.test(r[iQo]||"")))continue;
-    map.set(ao,{day:(r[iDay]||"").trim(),style:cleanStyle(r[iS]),area:(r[iAr]||"").trim(),launch:(r[iL]||"").trim(),retired:/^y/i.test((r[iR]||"").trim())})}
+  for(const r of rows.slice(1)){const ao=(r[iA]||"").trim();if(!ao)continue;
+    map.set(ao,{day:(r[iDay]||"").trim(),city:(r[iC]||"").trim(),qsource:yes(r[iQ]),qsourceOnly:yes(r[iQo]),retired:yes(r[iR])})}
   return map;
 }
-function sitesFromSnapshot(){return new Map(SITES_SNAPSHOT.map(([ao,day,style,area,launch,ret])=>[ao,{day,style,area,launch,retired:ret==="Y"}]))}
+function sitesFromSnapshot(){return new Map(SITES_SNAPSHOT.map(([ao,day,city,q,qo,ret])=>[ao,{day,city,qsource:yes(q),qsourceOnly:yes(qo),retired:yes(ret)}]))}
+
+// ---- Roster tab: only F3 Name, Date Joined, Region --------------------------
+const ROSTER_CSV_URL = SHEET_CSV_URL.replace("sheet=Master%20Data","sheet=Roster");
+function rosterFromRows(rows){
+  const hdr=rows[0].map(h=>h.trim().toLowerCase()),ix=n=>hdr.indexOf(n);
+  const iN=ix("f3 name"),iJ=ix("date joined"),iR=ix("region");
+  if(iN<0||iJ<0)throw new Error("Roster headers not found");
+  const map=new Map();
+  for(const r of rows.slice(1)){const name=(r[iN]||"").trim();if(!name)continue;
+    const d=parseDate(r[iJ]);if(!d)continue;const t=Date.UTC(d.y,d.m-1,d.d)/864e5;
+    const prev=map.get(name);if(prev&&prev.joined<=t)continue; // duplicates: keep the earliest join
+    map.set(name,{joined:t,region:(iR>=0&&(r[iR]||"").trim())||"Unknown"})}
+  return map;
+}
 function fetchCSV(url){return fetch(url,{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.text()}).then(parseCSV)}

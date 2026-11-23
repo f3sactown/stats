@@ -20,9 +20,9 @@ Current version: see [`VERSION`](VERSION) and [`BUILD`](BUILD), or the footer of
 
 - Totals with change against the previous period: workouts, posts, unique PAX, average PAX per workout, share of workouts in the 8–15 range, new PAX.
 - Posts per week (per month for all time), and a histogram of workout sizes with the 8–15 ideal and the 18 DRTF line marked.
-- Average PAX by day of week, and posts by workout style (from the Sites tab).
+- Average PAX by day of week, posts by AO city (from the Sites tab), and posts by each PAX's home region (from the Roster).
 - Sortable AO and PAX tables, the PAX table with search.
-- New PAX (first post on record) and "Missing in action": regulars with 10+ posts whose last post was 3–26 weeks ago.
+- New PAX (SacTown PAX whose Date Joined on the Roster is in the period) and "Missing in action": regulars with 10+ posts whose last post was 3–26 weeks ago.
 
 Link straight to a period with `#p4w`, `#p13w`, `#p2026` or `#pall`.
 
@@ -30,16 +30,24 @@ Link straight to a period with `#p4w`, `#p13w`, `#p2026` or `#pall`.
 
 The page reads the **Master Data** tab of the F3 SacTown Data Google Sheet every time it loads, so new workouts appear on their own. The sheet must stay shared as "Anyone with the link can view."
 
+Only these sheet columns are used; everything else in the sheet is ignored:
+
+| Tab | Columns |
+| --- | --- |
+| Master Data | Post Date, AO Name, PAX Name, FNG, Post, Q, QSource, Q QSource |
+| Sites | AO Name, Day, City, Q Source, Q Source Only, Retired |
+| Roster | F3 Name, Date Joined, Region |
+
 Counting rules:
 
-- Only rows with a `1` in the **Post** column count. Q-Source rows (McKinley's QSource column, and the Q-Source AO) are excluded.
+- Only rows with a `1` in the **Post** column count. Q-Source rows (McKinley's QSource column, and the Q-Source AO) are excluded, as are AOs marked **Q Source Only** on the Sites tab.
 - A PAX listed twice at the same workout counts once.
 - "Site Closed (Archived)" placeholder rows are ignored.
 - AOs whose name starts with a year (e.g. `2026 QvQ Inter-Regional Championship`) are grouped as events.
 
 If the sheet can't be reached, the page falls back to a snapshot of the data built into `data.js` (currently through Nov 5, 2026).
 
-If the page stops loading live data, publish the tab as CSV (**File → Share → Publish to web → Master Data → CSV**) and paste that link into `SHEET_CSV_URL` at the top of `data.js`. The Insights page also reads the **Sites** tab for each AO's day and style, falling back to a copy in `data.js`.
+If the page stops loading live data, publish the tab as CSV (**File → Share → Publish to web → Master Data → CSV**) and paste that link into `SHEET_CSV_URL` at the top of `data.js`. The Insights page also reads the **Sites** and **Roster** tabs. If Sites can't be read it uses a copy in `data.js`; if the Roster can't be read, New PAX falls back to each PAX's first post and the home-region chart is hidden.
 
 ## Hosting
 
