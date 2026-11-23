@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Settings</title>
+<meta name="color-scheme" content="light dark">
+<script>try{const t=localStorage.getItem("hm-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="site.css?v=16">
+<style>
+/* Settings: region, sheet, tabs and column names */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;display:grid;gap:14px}
+.panel h2{font-family:var(--display);font-size:24px;font-weight:700;margin:0;line-height:1.05}
+.panel .sub{margin:-8px 0 0;font-size:13px;color:var(--muted);max-width:75ch}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px 18px}
+.field{display:grid;gap:5px;align-content:start}
+.field>span{font-weight:600;font-size:14px}
+.field small{font-size:12px;color:var(--muted)}
+.field input{font:15px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0;width:100%}
+.field input:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.field.bad input{border-color:var(--bad)}
+.field .st{font:500 11px var(--mono);min-height:1em}
+.field .st.ok{color:var(--good)}.field .st.no{color:var(--bad)}
+.seg{display:inline-flex;gap:2px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--bg);justify-self:start}
+.seg label{cursor:pointer;padding:6px 18px;border-radius:999px;font:600 14px var(--body);color:var(--muted)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--h4);color:var(--t4)}
+.seg label:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+.preview{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px dashed var(--line);border-radius:8px}
+.preview img{width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg)}
+.preview b{font-family:var(--display);font-size:22px}
+fieldset{border:1px solid var(--line);border-radius:8px;padding:12px 14px 14px;margin:0;display:grid;gap:12px;min-width:0}
+legend{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 6px}
+.req{color:var(--bad)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{font:600 15px var(--body);border-radius:6px;padding:9px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--h4);border-color:var(--h4);color:var(--t4)}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.btn:disabled{opacity:.5;cursor:default}
+.msg{font-size:14px;margin:0}
+.msg.ok{color:var(--good)}.msg.no{color:var(--bad)}
+.banner{background:color-mix(in srgb,var(--ideal) 14%,var(--surface));border:1px solid var(--ideal);border-radius:8px;padding:10px 14px;font-size:14px}
+.checks{display:grid;gap:4px;margin:0;padding:0;list-style:none;font-size:14px}
+.checks .ok::before{content:"✓ ";color:var(--good);font-weight:700}
+.checks .no::before{content:"✕ ";color:var(--bad);font-weight:700}
+.howto{font-size:14px;color:var(--muted);margin:0;max-width:75ch}
+.howto code{font-family:var(--mono);font-size:13px;color:var(--ink)}
+</style>
+</head>
+<body data-page="settings" data-title="Settings">
+
+<div class="wrap">
+  <nav class="tabs" id="tabs" aria-label="Pages"></nav>
+  <header>
+    <a class="brand" href="https://f3sactown.com/" aria-label="F3 SacTown home"><img src="icons/icon-192.png" alt="F3 SacTown logo" width="76" height="76"></a>
+    <div class="eyebrow"><span data-brand>F3 SacTown</span> · Setup</div>
+    <h1>Settings</h1>
+    <p class="lede">Point the site at a region's Google Sheet: name and logo, which sheet and tabs to read, and which column holds each piece of data.</p>
+  </header>
+
+  <p class="banner" id="banner" hidden>This device is using its own settings, not the site's. <button type="button" class="btn" id="useSite" style="margin-left:6px;padding:4px 10px;font-size:13px">Use the site's settings</button></p>
+
+  <form id="form" novalidate>
+  <div style="display:grid;gap:22px">
+    <section class="panel">
+      <h2>Region</h2>
+      <p class="sub">Shown in the page headers, titles and logo link.</p>
+      <div class="field"><span>Organization</span>
+        <div class="seg" role="radiogroup" aria-label="Organization">
+          <label><input type="radio" name="org" value="F3">F3</label>
+          <label><input type="radio" name="org" value="FiA">FiA</label>
+        </div>
+      </div>
+      <div class="fields">
+        <label class="field"><span>Region name</span><input id="region" autocomplete="off" placeholder="SacTown"><small>Just the name, without F3 or FiA.</small></label>
+        <label class="field"><span>Website link</span><input id="website" type="url" placeholder="https://f3sactown.com/"><small>Where the logo links to.</small></label>
+        <label class="field"><span>Logo image link</span><input id="logo" placeholder="https://…/logo.png"><small>A full image URL, or a file in the site's repo such as <code>icons/icon-192.png</code>.</small></label>
+      </div>
+      <div class="preview" aria-live="polite"><img id="logoPrev" alt=""><div><b id="brandPrev"></b><div class="field"><small>Preview</small></div></div></div>
+    </section>
+
+    <section class="panel">
+      <h2>Google Sheet</h2>
+      <p class="sub">The sheet must be shared as <b>Anyone with the link can view</b>. Use <b>Check sheet</b> to confirm every tab and column below can be found.</p>
+      <label class="field"><span>Google Sheet link</span><input id="sheet" type="url" placeholder="https://docs.google.com/spreadsheets/d/…/edit"><small>Paste the link from the browser's address bar.</small></label>
+      <div class="fields" id="tabs-fields"></div>
+      <div class="actions"><button type="button" class="btn" id="check">Check sheet</button><span class="msg" id="checkMsg" aria-live="polite"></span></div>
+      <ul class="checks" id="checks"></ul>
+    </section>
+
+    <section class="panel">
+      <h2>Columns</h2>
+      <p class="sub">The header text in row 1 of each tab, for each piece of data the site uses. Matching ignores capital letters. Fields marked <span class="req">*</span> are required. After a check, each box suggests the headers found on that tab.</p>
+      <div id="cols" style="display:grid;gap:14px"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Save</h2>
+      <div class="actions">
+        <button type="submit" class="btn primary">Save on this device</button>
+        <button type="button" class="btn" id="download">Download site-config.js</button>
+        <button type="button" class="btn" id="reset">Reset to the site's settings</button>
+        <span class="msg" id="saveMsg" aria-live="polite"></span>
+      </div>
+      <p class="howto"><b>Save on this device</b> applies the settings in this browser straight away, so you can try them out. To change the site for <b>everyone</b>, click <b>Download site-config.js</b> and replace <code>site-config.js</code> in the site's GitHub repository with it (or ask Claude to commit it).</p>
+    </section>
+  </div>
+  </form>
+
+  <footer class="foot" id="foot"></footer>
+</div>
+
+<script src="site-config.js?v=16"></script>
+<script src="config.js?v=16"></script>
+<script src="data.js?v=16"></script>
+<script src="site.js?v=16"></script>
+<script src="settings.js?v=16"></script>
+</body>
+</html>

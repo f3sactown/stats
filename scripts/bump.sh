@@ -25,8 +25,8 @@ echo "$build" > BUILD
 sed -i.bak -E "s/^const APP_VERSION = \"[^\"]*\";/const APP_VERSION = \"$ver\";/; s/^const APP_BUILD = [0-9]+;/const APP_BUILD = $build;/" site.js
 rm -f site.js.bak
 # Cache-busting: bump ?v= on the shared CSS/JS links so browsers never mix old and new files
-sed -i.bak -E "s/\\.(css|js)\\?v=[0-9]+\"/.\\1?v=$build\"/g" index.html insights.html
-rm -f index.html.bak insights.html.bak
+sed -i.bak -E "s/\\.(css|js)\\?v=[0-9]+\"/.\\1?v=$build\"/g" index.html insights.html settings.html
+rm -f index.html.bak insights.html.bak settings.html.bak
 
 today=$(date +%Y-%m-%d)
 tmp=$(mktemp)

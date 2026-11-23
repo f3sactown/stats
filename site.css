@@ -5,6 +5,7 @@
   --h1:#eef3fa; --h2:#c6d8ef; --h3:#86aee0; --h4:#4a7fc4; --h5:#22549a; --h6:#0e2f63;
   --t1:#172233; --t2:#172233; --t3:#172233; --t4:#ffffff; --t5:#ffffff; --t6:#ffffff;
   --ideal:#e0a227; --ideal-ink:#8a5f0b;
+  --good:#1e7d3a; --bad:#c43d2f;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
@@ -16,6 +17,7 @@
   --h1:#1f2b3f; --h2:#27416b; --h3:#2f5f9f; --h4:#4a86d2; --h5:#8ab5ec; --h6:#d2e3f9;
   --t1:#e6ecf5; --t2:#e6ecf5; --t3:#ffffff; --t4:#ffffff; --t5:#0e1a2e; --t6:#0e1a2e;
   --ideal:#e8b03a; --ideal-ink:#e8b84a;
+  --good:#4cc275; --bad:#ff7a6b;
   color-scheme:dark;
 }}
 :root[data-theme="dark"]{
@@ -23,6 +25,7 @@
   --h1:#1f2b3f; --h2:#27416b; --h3:#2f5f9f; --h4:#4a86d2; --h5:#8ab5ec; --h6:#d2e3f9;
   --t1:#e6ecf5; --t2:#e6ecf5; --t3:#ffffff; --t4:#ffffff; --t5:#0e1a2e; --t6:#0e1a2e;
   --ideal:#e8b03a; --ideal-ink:#e8b84a;
+  --good:#4cc275; --bad:#ff7a6b;
   color-scheme:dark;
 }
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
@@ -69,3 +72,11 @@ footer.foot .notes.version{text-align:center}
 .tabs a[aria-current="page"]{background:var(--bg);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
 .tabs a[aria-current="page"] svg{color:var(--ideal)}
 .tabs a:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+/* ⓘ explanation buttons and the shared tooltip */
+.info{all:unset;cursor:help;display:inline-grid;place-items:center;width:18px;height:18px;margin-left:4px;vertical-align:-3px;color:var(--muted);border-radius:50%}
+.info svg{width:16px;height:16px}
+.info:hover,.info:focus-visible{color:var(--ink)}
+.info:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+#tip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--bg);font:500 12px/1.5 var(--mono);padding:7px 9px;border-radius:6px;white-space:pre-line;max-width:min(340px,calc(100vw - 16px));opacity:0;transition:opacity .08s;text-transform:none;letter-spacing:0}
+#tip.on{opacity:1}
+.eyebrow [data-brand]{text-transform:none;letter-spacing:.02em}

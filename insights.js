@@ -1,14 +1,13 @@
-// Insights page: KPIs, trend, workout-size histogram, day / city / home-region
-// breakdowns, AO and PAX leaderboards, new PAX and regulars gone quiet.
-// Sheet columns used: Master Data (Post Date, AO Name, PAX Name, Post, Q),
-// Sites (AO Name, Day, City, Q Source Only, Retired), Roster (F3 Name, Date Joined, Region).
-// Data and counting rules come from data.js, shared with the heatmap.
+// Insights page: summary cards with sparklines, trend, workout-size histogram,
+// day / city / home-region breakdowns, AO and PAX leaderboards, new PAX and
+// regulars gone quiet. Every card and chart has an ⓘ explaining its data.
+// Sheet, tab and column names come from config.js; counting rules from data.js.
 
 const DAY = 864e5;
 const DOW_ORDER = [1,2,3,4,5,6,0];
 const DOW_FULL = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-const NEW_PAX_FROM = Date.UTC(2025,1,1)/DAY;   // roster and sheet start Jan 2025 with existing PAX, so joins before Feb 2025 aren't "new"
-const HOME_REGION = "SacTown";
+const HOME_REGION = CONFIG.region;
+let NEW_PAX_FROM = 0;   // the data starts with existing PAX, so joins in its first month aren't "new" (set in prep)
 const MIA_MIN_POSTS = 10, MIA_FROM_DAYS = 21, MIA_TO_DAYS = 182;
 const PAX_ROWS = 25;
 
@@ -18,7 +17,7 @@ const aoSort = {key:"avg",dir:-1}, paxSort = {key:"posts",dir:-1};
 let paxAll = false;
 
 const $ = id => document.getElementById(id);
-const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const esc = escHTML;
 const fmt = n => n.toLocaleString("en-US");
 const dOf = t => new Date(t*DAY);
 const short = t => { const d = dOf(t); return `${MON[d.getUTCMonth()].slice(0,3)} ${d.getUTCDate()}` };
@@ -32,7 +31,9 @@ function prep(){
   WORKOUTS.sort((a,b) => a.t-b.t || a.ao.localeCompare(b.ao));
   FIRST = new Map();
   for (const w of WORKOUTS) for (const p of w.pax) if (!FIRST.has(p)) FIRST.set(p, w);
+  NEW_PAX_FROM = WORKOUTS.length ? WORKOUTS[0].t + 31 : 0;
 }
+const HAS_FNG = () => WORKOUTS.some(w => w.fng);
 function siteOf(ao){
   if (isEvent(ao)) return {city:"Event", day:"", retired:false};
   const s = SITES.get(ao);
@@ -40,12 +41,15 @@ function siteOf(ao){
 }
 const inRange = (a,b) => WORKOUTS.filter(w => w.t >= a && w.t <= b);
 
-function summarize(ws, a, b){
-  const posts = ws.reduce((s,w) => s+w.n, 0), pax = new Set();
-  ws.forEach(w => w.pax.forEach(p => pax.add(p)));
-  const fresh = newPaxList(a, b).length;
-  return {workouts:ws.length, posts, unique:pax.size, avg: ws.length ? posts/ws.length : 0,
-          idealPct: ws.length ? ws.filter(w => ideal(w.n)).length/ws.length*100 : 0, fresh};
+// Every summary number for a set of workouts in a..b
+function metrics(ws, a, b){
+  const posts = ws.reduce((s,w) => s+w.n, 0), pax = new Set(), qs = new Set(), days = new Set(), aos = new Set();
+  let fng = 0;
+  ws.forEach(w => { w.pax.forEach(p => pax.add(p)); w.qs.forEach(q => qs.add(q)); days.add(w.t); aos.add(w.ao); if (w.fng) fng += w.fng.length });
+  return {days:days.size, workouts:ws.length, posts, postsPerDay: days.size ? posts/days.size : 0, uniqueQ:qs.size, unique:pax.size,
+          fng: HAS_FNG() ? fng : null, aoCount:aos.size, postsPerPax: pax.size ? posts/pax.size : 0,
+          avg: ws.length ? posts/ws.length : 0, idealPct: ws.length ? ws.filter(w => ideal(w.n)).length/ws.length*100 : 0,
+          fresh: newPaxList(a, b).length};
 }
 
 // ---- Date range picker ---------------------------------------------------
@@ -133,9 +137,10 @@ function render(){
   drawPicker();
   const ws = inRange(CUR.a, CUR.b);
   const prev = CUR.pa != null ? inRange(CUR.pa, CUR.pb) : null;
-  document.title = `${CUR.k === "custom" ? `${short(CUR.a)} – ${long(CUR.b)}` : CUR.label} · SacTown Insights`;
-  kpis(ws, prev);
-  trend(ws);
+  document.title = pageTitle(`${CUR.k === "custom" ? `${short(CUR.a)} – ${long(CUR.b)}` : CUR.label} Insights`);
+  const B = buckets(ws);
+  kpis(ws, prev, B);
+  trend(B);
   histogram(ws);
   byDow(ws);
   byCity(ws);
@@ -146,21 +151,46 @@ function render(){
   mia();
 }
 
-function kpis(ws, prev){
-  const s = summarize(ws, CUR.a, CUR.b), p = prev && prev.length ? summarize(prev, CUR.pa, CUR.pb) : null;
-  const pct = (a,b) => b ? Math.round((a-b)/b*100) : null;
-  const dl = (d, unit="%") => d == null ? "" : d === 0 ? `<span>no change</span>` :
-    `<span class="${d>0?"up":"down"}">${unit === "" ? Math.abs(d).toFixed(1) : Math.abs(d)}${unit}</span>`;
-  const tiles = [
-    ["Workouts", fmt(s.workouts), p && pct(s.workouts, p.workouts)],
-    ["Total posts", fmt(s.posts), p && pct(s.posts, p.posts)],
-    ["Unique PAX", fmt(s.unique), p && pct(s.unique, p.unique)],
-    ["Avg PAX / workout", s.avg.toFixed(1), p && +(s.avg-p.avg).toFixed(1), ""],
-    [`In ${IDEAL_LO}–${IDEAL_HI} range`, Math.round(s.idealPct)+"%", p && Math.round(s.idealPct-p.idealPct), " pts"],
-    ["New PAX", fmt(s.fresh), p && pct(s.fresh, p.fresh), "%", p && p.fresh]
-  ];
-  $("kpis").innerHTML = tiles.map(([l,v,d,u,was]) =>
-    `<div class="kpi"><span>${l}</span><b>${v}</b><small>${!p ? "&nbsp;" : d == null && was === 0 ? `0 in ${CUR.prior}` : `${dl(d,u)} vs ${CUR.prior}`}</small></div>`).join("");
+// ---- Summary cards ---------------------------------------------------------
+const W_COLS = () => colsUsed("master", ["date","ao","pax","post"]);
+const CARDS = [
+  {k:"days",        label:"1st F Days",            f:v => fmt(v),        tip:() => `Days with at least one workout.\nCalc: count of distinct workout dates.\nData: ${colsUsed("master",["date","post"])}`},
+  {k:"workouts",    label:"Total Workouts",        f:v => fmt(v),        tip:() => `Each AO + date with at least one post is one workout.\nCalc: count of AO/date pairs.\nData: ${W_COLS()}`},
+  {k:"posts",       label:"Total Posts",           f:v => fmt(v),        tip:() => `Calc: PAX at every workout, added up. A PAX listed twice at one workout counts once; Q-Source rows are left out.\nData: ${colsUsed("master",["date","ao","pax","post","qsource","qqsource"])}`},
+  {k:"postsPerDay", label:"Average Posts per Day", f:v => v.toFixed(2),  tip:() => `Calc: Total Posts ÷ 1st F Days.\nData: ${W_COLS()}`},
+  {k:"uniqueQ",     label:"Unique Q's",            f:v => fmt(v),        tip:() => `Different PAX who led at least one workout.\nCalc: distinct names with ${CONFIG.cols.master.q} = 1.\nData: ${colsUsed("master",["pax","q","post"])}`},
+  {k:"unique",      label:"Unique PAX",            f:v => fmt(v),        tip:() => `Different PAX who posted at least once.\nCalc: distinct PAX names.\nData: ${colsUsed("master",["pax","post"])}`},
+  {k:"fng",         label:"FNG",                   f:v => v == null ? "–" : fmt(v), tip:() => `First-time PAX marked in the workout data.\nCalc: posts with ${CONFIG.cols.master.fng} = 1.\nData: ${colsUsed("master",["pax","fng","post"])}`},
+  {k:"aoCount",     label:"AO Count",              f:v => fmt(v),        tip:() => `AOs with at least one workout.\nCalc: count of distinct AO names.\nData: ${colsUsed("master",["ao","post"])}`},
+  {k:"postsPerPax", label:"Average Posts per PAX", f:v => v.toFixed(2),  tip:() => `How often the average PAX posted.\nCalc: Total Posts ÷ Unique PAX.\nData: ${W_COLS()}`},
+  {k:"avg",         label:"Avg PAX per Workout",   f:v => v.toFixed(1),  tip:() => `Calc: Total Posts ÷ Total Workouts.\nData: ${W_COLS()}`},
+  {k:"idealPct",    label:`In ${IDEAL_LO}–${IDEAL_HI} Range`, f:v => Math.round(v) + "%", pts:true, tip:() => `Share of workouts with ${IDEAL_LO} to ${IDEAL_HI} PAX, the ideal size.\nCalc: workouts with ${IDEAL_LO}–${IDEAL_HI} PAX ÷ Total Workouts. Change is in percentage points.\nData: ${W_COLS()}`},
+  {k:"fresh",       label:"New PAX",               f:v => fmt(v),        tip:() => ROSTER
+      ? `${HOME_REGION} PAX who joined in the range.\nCalc: Roster rows with ${CONFIG.cols.roster.region} = ${HOME_REGION} and ${CONFIG.cols.roster.joined} in the range (not counting the data's first month).\nData: ${colsUsed("roster",["name","joined","region"])}`
+      : `The Roster couldn't be read, so this counts PAX whose first post on record is in the range (not counting the data's first month).\nData: ${colsUsed("master",["date","pax","post"])}`}
+];
+function spark(values){
+  const vals = values.map(v => v ?? 0), lo = Math.min(...vals), hi = Math.max(...vals), n = vals.length;
+  if (n < 2) return "";
+  const y = v => hi === lo ? 14 : 25 - (v - lo)/(hi - lo)*22;
+  const pts = vals.map((v,i) => `${(i/(n-1)*100).toFixed(2)},${y(v).toFixed(2)}`).join(" ");
+  return `<svg class="spark" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}"/></svg>`;
+}
+function kpis(ws, prev, B){
+  const s = metrics(ws, CUR.a, CUR.b), p = prev && prev.length ? metrics(prev, CUR.pa, CUR.pb) : null;
+  const per = B.rows.map(r => metrics(r.list, r.a, r.b));
+  $("kpis").innerHTML = CARDS.map(c => {
+    const v = s[c.k], pv = p ? p[c.k] : null;
+    let change = "&nbsp;";
+    if (p && v != null && pv != null){
+      const d = c.pts ? Math.round(v - pv) : pv ? (v - pv)/pv*100 : null;
+      if (d == null) change = `<span class="flat">${c.f(pv)} in ${CUR.prior}</span>`;
+      else if (Math.abs(d) < 0.05) change = `<span class="flat">no change</span> vs ${CUR.prior}`;
+      else change = `<span class="${d > 0 ? "up" : "down"}">${d > 0 ? "▲" : "▼"} ${c.pts ? Math.abs(d) + " pts" : Math.abs(d).toFixed(1) + "%"}</span> vs ${CUR.prior}`;
+    } else if (v == null) change = `<span class="flat">needs the live sheet</span>`;
+    const line = v == null ? "" : spark(per.map(m => m[c.k]));
+    return `<div class="kpi"><span class="lab">${c.label}${infoTip(c.tip() + `\nLine: per ${B.unit} across the range.`, c.label)}</span><b>${c.f(v)}</b><small>${change}</small>${line}</div>`;
+  }).join("");
 }
 
 function nice(max){
@@ -171,29 +201,31 @@ function nice(max){
 }
 function grid(max){ return [max, max/2].map(v => `<div class="gl" style="bottom:${v/max*100}%"><span>${fmt(Math.round(v))}</span></div>`).join("") }
 
-function trend(ws){
+// Split the range into day / week / month buckets: {unit, rows:[{k,a,b,label,full,list}]}
+function buckets(ws){
   const span = CUR.b - CUR.a + 1, monthly = span > 400, daily = span <= 45;
-  const buckets = new Map();
-  const bucketOf = monthly ? w => w.y*100+w.m : daily ? w => w.t : w => w.t - ((w.dow+6)%7);
+  const m = new Map();
   if (daily){
-    for (let t = CUR.a; t <= CUR.b; t++) buckets.set(t, []);
+    for (let t = CUR.a; t <= CUR.b; t++) m.set(t, {a:t, b:t, label:short(t), full:`${DOW_FULL[dOf(t).getUTCDay()]}, ${long(t)}`});
   } else if (monthly){
     const a = dOf(CUR.a), b = dOf(CUR.b);
-    for (let y=a.getUTCFullYear(), m=a.getUTCMonth()+1; y*100+m <= b.getUTCFullYear()*100+b.getUTCMonth()+1; m===12 ? (y++, m=1) : m++) buckets.set(y*100+m, []);
+    for (let y=a.getUTCFullYear(), mo=a.getUTCMonth(); y*12+mo <= b.getUTCFullYear()*12+b.getUTCMonth(); mo===11 ? (y++, mo=0) : mo++){
+      const k = y*100+mo+1;
+      m.set(k, {a:Math.max(CUR.a, ymd(y,mo,1)), b:Math.min(CUR.b, ymd(y,mo+1,0)), label:`${MON[mo].slice(0,3)}${mo===0 || m.size===0 ? " ’"+String(y).slice(2) : ""}`, full:`${MON[mo]} ${y}`});
+    }
   } else {
-    const first = CUR.a - ((dOf(CUR.a).getUTCDay()+6)%7);
-    for (let t = first; t <= CUR.b; t += 7) buckets.set(t, []);
+    for (let t = CUR.a - ((dOf(CUR.a).getUTCDay()+6)%7); t <= CUR.b; t += 7) m.set(t, {a:Math.max(t, CUR.a), b:Math.min(t+6, CUR.b), label:short(t), full:`Week of ${long(t)}`});
   }
-  ws.forEach(w => { const k = bucketOf(w); if (buckets.has(k)) buckets.get(k).push(w) });
-  const rows = [...buckets].map(([k, list]) => {
-    const pax = new Set(); list.forEach(w => w.pax.forEach(p => pax.add(p)));
-    const label = monthly ? `${MON[k%100-1].slice(0,3)}${k%100===1 || k===[...buckets.keys()][0] ? " ’"+String(Math.floor(k/100)).slice(2) : ""}` : short(k);
-    const full = monthly ? `${MON[k%100-1]} ${Math.floor(k/100)}` : daily ? `${DOW_FULL[dOf(k).getUTCDay()]}, ${long(k)}` : `Week of ${long(k)}`;
-    return {label, full, posts:list.reduce((s,w) => s+w.n, 0), workouts:list.length, unique:pax.size};
-  });
-  const unit = monthly ? "month" : daily ? "day" : "week";
-  $("trendTitle").textContent = `Posts per ${unit}`;
-  $("trendUnit").textContent = unit;
+  const keyOf = monthly ? w => w.y*100+w.m : daily ? w => w.t : w => w.t - ((w.dow+6)%7);
+  for (const r of m.values()) r.list = [];
+  ws.forEach(w => { const r = m.get(keyOf(w)); if (r) r.list.push(w) });
+  return {unit: monthly ? "month" : daily ? "day" : "week", rows:[...m.values()]};
+}
+function trend(B){
+  const rows = B.rows.map(r => { const pax = new Set(); r.list.forEach(w => w.pax.forEach(p => pax.add(p)));
+    return {...r, posts:r.list.reduce((s,w) => s+w.n, 0), workouts:r.list.length, unique:pax.size} });
+  $("trendTitle").textContent = `Posts per ${B.unit}`;
+  $("trendUnit").textContent = B.unit;
   const max = nice(Math.max(1, ...rows.map(r => r.posts)));
   $("trend").innerHTML = grid(max) + rows.map(r =>
     `<div class="bar" data-tip="${esc(r.full)}\n${fmt(r.posts)} posts · ${r.workouts} workouts\n${r.unique} unique PAX"><i style="height:${r.posts/max*100}%"></i></div>`).join("");
@@ -264,7 +296,7 @@ function aoTable(ws, prev){
   const now = group(ws), before = prev ? group(prev) : new Map();
   AO_ROWS = [...now].map(([ao, list]) => {
     const posts = list.reduce((s,w) => s+w.n, 0), pax = new Set(), qs = {};
-    list.forEach(w => { w.pax.forEach(p => pax.add(p)); if (w.q) qs[w.q] = (qs[w.q]||0) + 1 });
+    list.forEach(w => { w.pax.forEach(p => pax.add(p)); w.qs.forEach(q => qs[q] = (qs[q]||0) + 1) });
     const site = siteOf(ao), avg = posts/list.length;
     const usual = site.day || DOW_FULL[Object.entries(list.reduce((c,w) => (c[w.dow]=(c[w.dow]||0)+1, c), {})).sort((a,b) => b[1]-a[1])[0][0]];
     const pl = before.get(ao), pavg = pl ? pl.reduce((s,w) => s+w.n, 0)/pl.length : null;
@@ -295,7 +327,7 @@ function paxTable(ws){
     if (!m.has(p)) m.set(p, {name:p, posts:0, qs:0, aos:new Map(), last:0});
     const r = m.get(p); r.posts++; r.aos.set(w.ao, (r.aos.get(w.ao)||0) + 1); if (w.t > r.last) r.last = w.t;
   }));
-  ws.forEach(w => { if (w.q && m.has(w.q)) m.get(w.q).qs++ });
+  ws.forEach(w => w.qs.forEach(q => { if (m.has(q)) m.get(q).qs++ }));
   PAX_ROWS_DATA = [...m.values()].map(r => ({...r, aoCount:r.aos.size, home:[...r.aos].sort((a,b) => b[1]-a[1])[0][0]}));
   drawPax();
 }
@@ -317,7 +349,7 @@ $("paxMore").addEventListener("click", () => { paxAll = !paxAll; drawPax() });
 
 function newPax(){
   const list = newPaxList(CUR.a, CUR.b).sort((a,b) => b.t-a.t || a.name.localeCompare(b.name));
-  $("newPaxSub").textContent = ROSTER ? `${HOME_REGION} PAX whose Date Joined on the Roster falls in the period, with their first AO.`
+  $("newPaxSub").textContent = ROSTER ? `${HOME_REGION} PAX whose ${CONFIG.cols.roster.joined} on the Roster falls in the range, with their first AO.`
     : "First post on record during the period (the Roster tab couldn't be read).";
   $("newPax").innerHTML = list.length ? list.map(r => `<li><span>${esc(r.name)}</span><span>${r.ao ? esc(r.ao) + " · " : ""}${short(r.t)}</span></li>`).join("")
     : `<li><span class="empty">No new PAX on record in this period.</span></li>`;
@@ -361,34 +393,43 @@ function mia(){
   $("mia").style.cssText = list.length > 12 ? "max-height:440px;overflow:auto" : "";
 }
 
-// ---- Tooltip (hover on desktop, tap on phones) ------------------------------
-const tip = $("tip");
-function showTip(e){
-  const el = e.target.closest && e.target.closest("[data-tip]");
-  document.querySelectorAll(".bar.on").forEach(b => b !== el && b.classList.remove("on"));
-  if (!el){ tip.classList.remove("on"); return }
-  el.classList.add("on");
-  tip.textContent = el.dataset.tip; tip.classList.add("on");
-  const r = tip.getBoundingClientRect();
-  let x = e.clientX + 12, y = e.clientY - r.height - 10;
-  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 12;
-  if (y < 8) y = e.clientY + 16;
-  tip.style.left = Math.max(8, x) + "px"; tip.style.top = y + "px";
+// ---- ⓘ explanations on each chart and table ---------------------------------
+const PANEL_INFO = {
+  trend: () => `Calc: PAX posts added up for each day, week or month (by range length).\nHover a bar for workouts and unique PAX.\nData: ${W_COLS()}`,
+  hist: () => `Calc: number of workouts at each PAX count (25+ grouped). Gold band = ${IDEAL_LO}–${IDEAL_HI} ideal; dashed line = 18, where DRTF sets in.\nData: ${W_COLS()}`,
+  dow: () => `Calc: Total Posts ÷ Total Workouts for each weekday of the workout date; events (AO names starting with a year) left out. The second number is workouts.\nData: ${W_COLS()}`,
+  city: () => `Calc: posts at AOs in each city, and Total Posts ÷ Total Workouts. AOs not on the Sites tab show as Other.\nData: ${W_COLS()}; ${colsUsed("sites",["ao","city"])}`,
+  region: () => `Calc: posts by each PAX's home region, and how many different PAX. PAX missing from the Roster show as Not on roster.\nData: ${colsUsed("master",["pax","post"])}; ${colsUsed("roster",["name","region"])}`,
+  ao: () => `Per AO in the range: workouts; average PAX (posts ÷ workouts); share of workouts with ${IDEAL_LO}–${IDEAL_HI} PAX; different PAX; who Q'd most; change in average PAX vs the comparison period. Day, city and retired come from Sites.\nData: ${colsUsed("master",["date","ao","pax","post","q"])}; ${colsUsed("sites",["ao","day","city","retired","qsourceOnly"])}`,
+  pax: () => `Per PAX in the range: posts; times as Q; different AOs posted at; the AO posted at most; last post date.\nData: ${colsUsed("master",["date","ao","pax","post","q"])}`,
+  newpax: () => ROSTER ? `${HOME_REGION} PAX whose join date is in the range, newest first, with the AO of their first post.\nData: ${colsUsed("roster",["name","joined","region"])}; ${colsUsed("master",["date","ao","pax","post"])}`
+    : `The Roster couldn't be read, so this lists PAX whose first post on record is in the range.\nData: ${colsUsed("master",["date","ao","pax","post"])}`,
+  mia: () => `PAX with ${MIA_MIN_POSTS}+ posts in all the data whose last post was 3 to 26 weeks before the latest workout. Not affected by the date range.\nData: ${colsUsed("master",["date","ao","pax","post"])}`
+};
+function drawPanelInfo(){
+  document.querySelectorAll("[data-info]").forEach(el => { el.innerHTML = infoTip(PANEL_INFO[el.dataset.info](), el.dataset.what) });
 }
-document.addEventListener("pointermove", showTip);
-document.addEventListener("pointerdown", showTip);
-addEventListener("scroll", () => { tip.classList.remove("on"); document.querySelectorAll(".bar.on").forEach(b => b.classList.remove("on")) }, {passive:true});
 
-// ---- Start: snapshot first, then live sheet data ----------------------------
+// ---- Start: snapshot first (default sheet only), then live sheet data -------
 const src = $("source");
-WORKOUTS = fromSnapshot(); prep(); pickRange(); render();
-src.textContent = `Snapshot from ${SNAPSHOT_DATE} · checking the sheet…`;
+function start(){
+  drawPanelInfo();
+  const empty = !WORKOUTS.length;
+  document.querySelectorAll(".needs-data").forEach(el => el.hidden = empty);
+  if (empty){ $("pickBtn").disabled = true; return }
+  $("pickBtn").disabled = false;
+  render();
+}
+WORKOUTS = fromSnapshot(); prep(); if (WORKOUTS.length) pickRange(); start();
+src.textContent = WORKOUTS.length ? `Snapshot from ${SNAPSHOT_DATE} · checking the sheet…` : "Loading from the Google Sheet…";
 Promise.allSettled([fetchCSV(SHEET_CSV_URL), fetchCSV(SITES_CSV_URL), fetchCSV(ROSTER_CSV_URL)]).then(([m, s, ro]) => {
   if (s.status === "fulfilled") try { const live = sitesFromRows(s.value); if (live.size) SITES = live } catch(e) {}
   if (ro.status === "fulfilled") try { const live = rosterFromRows(ro.value); if (live.size) ROSTER = live } catch(e) {}
-  let live = null;
-  if (m.status === "fulfilled") try { const l = fromRows(m.value); if (l.length >= 50) live = l } catch(e) {}
-  const keep = CUR; WORKOUTS = live || fromSnapshot(); prep(); pickRange(keep); render();
+  let live = null, why = m.status === "rejected" ? "check the link and that it's shared as Anyone with the link" : "";
+  if (m.status === "fulfilled") try { const l = fromRows(m.value); if (l.length) live = l; else why = "no workouts found" } catch(e) { why = e.message }
+  const keep = CUR; WORKOUTS = live || fromSnapshot(); prep();
+  if (WORKOUTS.length) pickRange(keep);
+  start();
   src.textContent = live ? `Live from the Google Sheet · ${new Date().toLocaleString([], {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"})}`
-    : `Showing snapshot from ${SNAPSHOT_DATE} (couldn't reach the sheet)`;
+    : WORKOUTS.length ? `Showing snapshot from ${SNAPSHOT_DATE} (couldn't reach the sheet)` : `Couldn't read the sheet: ${why}. See Settings.`;
 });
