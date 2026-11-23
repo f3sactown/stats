@@ -16,7 +16,7 @@ Current version: see [`VERSION`](VERSION) and [`BUILD`](BUILD), or the footer of
 
 ## Insights page
 
-`insights.html` (the **Insights** tab) summarises a chosen period: last 4 weeks, last 13 weeks, each year, or all time. It shows:
+`insights.html` (the **Insights** tab) summarises any date range. Click the date button to pick a preset (This month, Last month, Last 30 days, Last 90 days, This year, Last year, All time) or enter an exact start and end date. It shows:
 
 - Totals with change against the previous period: workouts, posts, unique PAX, average PAX per workout, share of workouts in the 8–15 range, new PAX.
 - Posts per week (per month for all time), and a histogram of workout sizes with the 8–15 ideal and the 18 DRTF line marked.
@@ -24,7 +24,7 @@ Current version: see [`VERSION`](VERSION) and [`BUILD`](BUILD), or the footer of
 - Sortable AO and PAX tables, the PAX table with search.
 - New PAX (SacTown PAX whose Date Joined on the Roster is in the period) and "Missing in action": regulars with 10+ posts whose last post was 3–26 weeks ago.
 
-Link straight to a period with `#p4w`, `#p13w`, `#p2026` or `#pall`.
+Link straight to a range with `#this-month`, `#last-month`, `#last-30`, `#last-90`, `#this-year`, `#last-year`, `#all`, or an exact range like `#2026-01-01_2026-03-31`. Totals compare against the matching earlier period: the same days last month or last year for the calendar presets, otherwise the same number of days just before.
 
 ## Where the data comes from
 

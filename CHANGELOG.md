@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.8.0 (build 15) - 2026-11-23
+
+- Insights: the period buttons are replaced by a **date range picker** like Data Studio's. Presets: This month, Last month, Last 30 days, Last 90 days, This year, Last year, All time; or enter an exact start and end date. Totals compare against the matching earlier period. Short ranges (45 days or less) show posts per day. The chosen range is kept in the link (e.g. `#last-month`, `#2026-01-01_2026-03-31`) and remembered; older `#p2025`-style links still work.
+- Insights: tidier change text on the total tiles (no forced capitals; average PAX change always shows one decimal).
+
 ## v1.7.1 (build 14) - 2026-11-23
 
 - Fix: right after a release, browsers could load the new page with an old cached script, leaving the Insights page half empty. Shared CSS and JS links now carry the build number (`?v=14`), which `scripts/bump.sh` updates on every release, so the page and its scripts always match.
