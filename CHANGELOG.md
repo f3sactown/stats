@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.10.0 (build 17) - 2026-11-28
+
+- New **PAX Vault** page (tab between Insights and Settings): find any PAX (or tap a leaderboard name) and pick All time or a year to see their profile (home AO, region, join and FNG dates), cards (posts with rank, Q's, AOs visited, posts per week, longest and current streak, last post, average workout size), an attendance calendar, posts per month, favorite AOs, weekdays, workout buddies, milestones, Q history and a full workout log, plus leaderboards for most posts, most Qs and longest streaks. Every card and chart has an ⓘ explanation. Uses only the approved sheet columns.
+- Shared card/chart/table styles moved to `charts.css`. On phones the page tabs drop their icons so all four fit on one line. `scripts/bump.sh` now updates every page.
+
 ## v1.9.0 (build 16) - 2026-11-23
 
 - New **Settings** page (third tab): choose F3 or FiA, region name, website and logo links, the Google Sheet link, tab names, and the header for each column the site uses. **Check sheet** confirms every column is found. Save on this device to try it, or **Download site-config.js** to change the site for everyone. The org + region name now fill in the headers and page titles.

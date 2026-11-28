@@ -1,7 +1,7 @@
 // Shared by every page: version number, page tabs, branding from config.js,
 // footer with the Light / Dark / System switch, and hover / tap tooltips.
-const APP_VERSION = "1.9.0";
-const APP_BUILD = 16;
+const APP_VERSION = "1.10.0";
+const APP_BUILD = 17;
 
 const escHTML = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pageTitle = s => `${s} · ${BRAND}`;
@@ -21,6 +21,7 @@ function colsUsed(tab, fields){ return `${CONFIG.tabs[tab]} tab · ${fields.map(
     const TABS = [
       ["heatmap", "./", "Heatmap", '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'],
       ["insights", "insights.html", "Insights", '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'],
+      ["vault", "vault.html", "PAX Vault", '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M12 8.5v1M12 14.5v1M8.5 12h1M14.5 12h1M3 9h-1M3 15h-1"/>'],
       ["settings", "settings.html", "Settings", '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>']
     ];
     nav.innerHTML = TABS.map(([k,href,label,icon]) => `<a href="${href}"${k===page ? ' aria-current="page"' : ""}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg>${label}</a>`).join("");

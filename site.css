@@ -65,7 +65,7 @@ footer.foot .notes.version{text-align:center}
 .theme button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .notes{font-size:13px;color:var(--muted);margin:0;max-width:75ch}
 /* Page tabs: same pill shape as the theme switch */
-.tabs{display:inline-flex;gap:2px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--surface);justify-self:start}
+.tabs{display:inline-flex;flex-wrap:wrap;max-width:100%;gap:2px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--surface);justify-self:start}
 .tabs a{display:inline-flex;align-items:center;gap:7px;padding:6px 16px;border-radius:999px;font:600 14px var(--body);color:var(--muted);text-decoration:none}
 .tabs a svg{width:16px;height:16px;flex:none}
 .tabs a:hover{color:var(--ink)}
@@ -80,3 +80,4 @@ footer.foot .notes.version{text-align:center}
 #tip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--bg);font:500 12px/1.5 var(--mono);padding:7px 9px;border-radius:6px;white-space:pre-line;max-width:min(340px,calc(100vw - 16px));opacity:0;transition:opacity .08s;text-transform:none;letter-spacing:0}
 #tip.on{opacity:1}
 .eyebrow [data-brand]{text-transform:none;letter-spacing:.02em}
+@media (max-width:480px){.tabs a{padding:6px 11px;font-size:13px}.tabs a svg{display:none}}
