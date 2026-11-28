@@ -27,6 +27,19 @@ Current version: see [`VERSION`](VERSION) and [`BUILD`](BUILD), or the footer of
 
 Link straight to a range with `#this-month`, `#last-month`, `#last-30`, `#last-90`, `#this-year`, `#last-year`, `#all`, or an exact range like `#2026-01-01_2026-03-31`. Totals compare against the matching earlier period: the same days last month or last year for the calendar presets, otherwise the same number of days just before.
 
+## PAX Vault
+
+`vault.html` (the **PAX Vault** tab) is each PAX's full record. Find a PAX by name (or tap one on the leaderboards) and pick All time or a year:
+
+- Profile: home AO, region and join date (Roster), FNG AO and date (FNG column), first post.
+- Cards: posts (with rank), Q's (and Q rate), AOs visited, posts per week, longest and current weekly streak, last post, average workout size.
+- Attendance calendar (one square per day, Q days ringed in gold), posts per month, favorite AOs, posts by weekday, workout buddies.
+- Milestones (1st, 25, 50, 100… posts; 1st, 10, 25… Qs) with the AO and date reached, and the next one to go.
+- Q history and a full workout log.
+- Vault leaderboards: most posts, most Qs, longest streaks.
+
+Link straight to a PAX with `vault.html#pax=Name` (add `&y=2026` for a year).
+
 ## Settings page
 
 `settings.html` (the **Settings** tab) sets:
@@ -83,6 +96,8 @@ The script updates `VERSION`, `BUILD`, the version shown on the page, and adds a
 | --- | --- |
 | `index.html` | Heatmap page |
 | `insights.html`, `insights.js` | Insights page: KPIs, trends, workout-size histogram, AO and PAX leaderboards, new PAX, regulars gone quiet |
+| `vault.html`, `vault.js` | PAX Vault page: one PAX's record and the leaderboards |
+| `charts.css` | Shared card, chart and table styles (Insights, PAX Vault) |
 | `settings.html`, `settings.js` | Settings page: region, F3/FiA, logo, Google Sheet link, tab and column names |
 | `site-config.js` | Site-wide settings everyone sees (replace it with the file the Settings page downloads) |
 | `config.js` | Merges `site-config.js` with settings saved on one device; column descriptions |

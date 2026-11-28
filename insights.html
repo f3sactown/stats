@@ -12,7 +12,8 @@
 <script>try{const t=localStorage.getItem("hm-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="site.css?v=16">
+<link rel="stylesheet" href="site.css?v=17">
+<link rel="stylesheet" href="charts.css?v=17">
 <style>
 /* Insights: KPI tiles, charts and leaderboards for a chosen period */
 /* Date range picker: one button that opens presets + an exact start/end range */
@@ -43,82 +44,6 @@
 .pick-actions button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 @media (max-width:560px){.pick-pop{grid-template-columns:1fr}.pick-presets{grid-template-columns:1fr 1fr;border-right:0;border-bottom:1px solid var(--line)}.pick-custom .dates{grid-template-columns:1fr}.pick-btn{flex-wrap:wrap;row-gap:2px}}
 
-.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
-.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px 12px;display:grid;gap:6px;align-content:start;grid-template-rows:auto auto auto 1fr}
-.kpi .lab{font-size:15px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;gap:6px}
-.kpi b{font-family:var(--display);font-size:42px;line-height:1;font-variant-numeric:tabular-nums}
-.kpi small{font-family:var(--mono);font-size:12px;color:var(--muted)}
-.kpi small .up{color:var(--good)}.kpi small .down{color:var(--bad)}
-.kpi .spark{width:100%;height:30px;align-self:end;margin-top:6px;overflow:visible}
-.kpi .spark polyline{fill:none;stroke:var(--h4);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
-.panel h2 .info{vertical-align:2px}
-
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:grid;gap:12px;min-width:0;align-content:start}
-.panel h2{font-family:var(--display);font-size:24px;font-weight:700;margin:0;line-height:1.05;letter-spacing:.01em}
-.panel .sub{margin:-6px 0 0;font-size:13px;color:var(--muted)}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
-@media (max-width:760px){.two{grid-template-columns:1fr}}
-.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}
-@media (max-width:600px){.three{grid-template-columns:1fr}}
-
-/* column charts */
-.cols{position:relative;height:200px;display:flex;align-items:flex-end;gap:2px;padding-left:34px;border-bottom:1px solid var(--line)}
-.cols .gl{position:absolute;left:34px;right:0;border-top:1px dashed var(--line);pointer-events:none}
-.cols .gl span{position:absolute;right:calc(100% + 6px);top:-8px;font:500 10px var(--mono);color:var(--muted)}
-.cols .bar{flex:1;min-width:2px;height:100%;display:flex;align-items:flex-end;cursor:default;position:relative;z-index:1}
-.cols .bar i{display:block;width:100%;background:var(--h4);border-radius:4px 4px 0 0;min-height:1px}
-.cols .bar:hover i,.cols .bar.on i{filter:brightness(1.18)}
-.xlab{display:flex;gap:2px;padding-left:34px;font:500 10px var(--mono);color:var(--muted);height:14px;margin-top:5px}
-.xlab span{flex:1;min-width:2px;text-align:center;white-space:nowrap;overflow:visible}
-.cols .band{position:absolute;bottom:0;top:0;background:color-mix(in srgb,var(--ideal) var(--band-mix,14%),transparent);border-top:2px solid var(--ideal);pointer-events:none;z-index:0}
-.cols .band span,.cols .cap span{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font:500 10px var(--mono);letter-spacing:.06em;color:var(--ideal-ink);white-space:nowrap}
-.cols .cap{position:absolute;bottom:0;top:0;border-left:2px dashed var(--muted);pointer-events:none;z-index:2}
-.cols .cap span{color:var(--muted);left:4px;transform:none}
-.hist{margin-top:18px}
-
-/* horizontal bars */
-.hbars{display:grid;gap:6px}
-.hb{display:grid;grid-template-columns:8.6em 1fr auto;align-items:center;gap:10px;font-size:14px}
-.hb .lab{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hb .track{height:18px;position:relative}
-.hb .track i{position:absolute;inset:0 auto 0 0;background:var(--h4);border-radius:0 4px 4px 0}
-.hb .val{font:500 12px var(--mono);color:var(--muted);text-align:right;white-space:nowrap}
-.hb .val b{color:var(--ink);font-weight:500}
-
-/* tables */
-.tbl-wrap{overflow-x:auto;margin:0 -4px}
-table.t{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
-table.t th{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
-table.t th:first-child,table.t td:first-child,table.t th.l{text-align:left}
-table.t th button{all:unset;cursor:pointer}
-table.t th button:hover{color:var(--ink)}
-table.t th button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-table.t th[aria-sort] button::after{content:" ▼";font-size:9px}
-table.t th[aria-sort="ascending"] button::after{content:" ▲"}
-table.t td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
-table.t td.name{font-weight:600;white-space:normal;min-width:120px}
-table.t td.name small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
-table.t td.l{text-align:left;color:var(--muted)}
-table.t tr:last-child td{border-bottom:0}
-.avgcell{display:inline-flex;align-items:center;gap:8px;justify-content:flex-end}
-.chip{display:inline-block;min-width:38px;padding:2px 6px;border-radius:4px;font:500 12px var(--mono);text-align:center}
-.chip.ideal{box-shadow:inset 0 0 0 2px var(--ideal)}
-.delta{font:500 12px var(--mono);color:var(--muted)}
-.tag{font:500 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 4px;margin-left:6px;vertical-align:1px}
-.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.tools input{font:15px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;min-width:0;flex:1;max-width:280px}
-.tools input:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
-.more{font:600 14px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer;justify-self:start}
-.more:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-.list{display:grid;gap:0;margin:0;padding:0;list-style:none;font-size:14px}
-.list li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)}
-.list li:last-child{border-bottom:0}
-.list li span:last-child{color:var(--muted);font:500 12px var(--mono);text-align:right;white-space:nowrap}
-.empty{color:var(--muted);font-size:14px;margin:0}
-
-[data-theme="dark"] .cols .band{--band-mix:9%}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cols .band{--band-mix:9%}}
-@media (max-width:600px){.cols{height:160px;padding-left:28px}.cols .gl{left:28px}.xlab{padding-left:28px}.hb{grid-template-columns:8.6em 1fr auto;font-size:13px}.kpis{grid-template-columns:1fr 1fr;gap:8px}.kpi{padding:12px}.kpi .lab{font-size:13px}.kpi b{font-size:30px}}
 </style>
 </head>
 <body data-page="insights" data-title="Insights">
@@ -219,10 +144,10 @@ table.t tr:last-child td{border-bottom:0}
   <footer class="foot" id="foot"></footer>
 </div>
 
-<script src="site-config.js?v=16"></script>
-<script src="config.js?v=16"></script>
-<script src="data.js?v=16"></script>
-<script src="site.js?v=16"></script>
-<script src="insights.js?v=16"></script>
+<script src="site-config.js?v=17"></script>
+<script src="config.js?v=17"></script>
+<script src="data.js?v=17"></script>
+<script src="site.js?v=17"></script>
+<script src="insights.js?v=17"></script>
 </body>
 </html>
